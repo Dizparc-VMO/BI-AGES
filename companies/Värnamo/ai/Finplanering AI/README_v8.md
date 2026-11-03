@@ -5,6 +5,15 @@ SQL Server as selectable input sources. The calculation, customer weighting,
 configurable tardiness limits, dynamic score bands, lock horizon, and output
 contract remain version-isolated from V5–V7.
 
+## Desktop menus and branding
+
+The V8 window displays the Dizparc wordmark and includes:
+
+- **Arkiv:** open an Excel workbook, choose the output directory, or exit the app.
+- **Hjälp → Dokumentation V8:** open the bundled V8 documentation.
+- **Hjälp → Kontakta support:** start an email to `support@dizparc.se`.
+- **Hjälp → Om AI Omplanering V8:** show the version and a short description of the application.
+
 ## Source modes
 
 - **Excel:** choose a workbook and output directory, then run the plan.

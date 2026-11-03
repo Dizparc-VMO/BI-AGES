@@ -8,6 +8,7 @@ a = Analysis(
     pathex=[project_root, os.path.join(project_root, "service")],
     binaries=[],
     datas=[
+        (os.path.join(project_root, "Property 1=Black.png"), "."),
         (os.path.join(project_root, "documentation_v8.html"), "."),
         (os.path.join(project_root, "instuktion.md"), "."),
         (os.path.join(project_root, "README_v8.md"), "."),

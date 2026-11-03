@@ -32,6 +32,7 @@ import sys
 import threading
 import time
 import traceback
+import webbrowser
 from datetime import datetime
 from typing import Optional
 
@@ -52,6 +53,12 @@ import omplanering_core_v8 as core  # noqa: E402
 
 APP_TITLE = f"AI Omplanering  v{core.VERSION}  –  Finplanering Op10"
 SETTINGS_FILE = sql_config.USER_SETTINGS_PATH
+
+
+def resource_path(name: str) -> str:
+    """Resolve a resource from source or the PyInstaller bundle."""
+    root = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(root, name)
 
 # Paletten foljer statusfaergerna i Jeeves.
 C_BG = "#f4f6f9"
@@ -175,6 +182,7 @@ class App(tk.Tk):
         self.configure(bg=C_BG)
 
         self.queue: "queue.Queue[tuple]" = queue.Queue()
+        self.logo_photo: Optional[tk.PhotoImage] = None
         self.result: Optional[core.RunResult] = None
         self.worker: Optional[threading.Thread] = None
         self._preview_rows = []
@@ -208,6 +216,7 @@ class App(tk.Tk):
         ]
 
         self._init_style()
+        self._build_menu()
         self._build()
         self._load_settings()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -242,15 +251,54 @@ class App(tk.Tk):
 
     # -- layout -----------------------------------------------------------
 
+    def _build_menu(self) -> None:
+        menu_bar = tk.Menu(self)
+
+        file_menu = tk.Menu(menu_bar, tearoff=False)
+        file_menu.add_command(
+            label="Öppna Excel-arbetsbok…",
+            command=self._choose_excel_workbook,
+            accelerator="Ctrl+O",
+        )
+        file_menu.add_command(
+            label="Välj utdatakatalog…",
+            command=self._pick_output,
+        )
+        file_menu.add_separator()
+        file_menu.add_command(label="Avsluta", command=self._on_close)
+        menu_bar.add_cascade(label="Arkiv", menu=file_menu)
+
+        help_menu = tk.Menu(menu_bar, tearoff=False)
+        help_menu.add_command(label="Dokumentation V8", command=self._open_doc)
+        help_menu.add_command(label="Kontakta support…", command=self._contact_support)
+        help_menu.add_separator()
+        help_menu.add_command(label="Om AI Omplanering V8", command=self._show_about)
+        menu_bar.add_cascade(label="Hjälp", menu=help_menu)
+
+        self.configure(menu=menu_bar)
+        self.bind_all("<Control-o>", lambda _event: self._choose_excel_workbook())
+
     def _build(self) -> None:
         head = ttk.Frame(self, padding=(18, 14, 18, 6))
         head.pack(fill="x")
-        ttk.Label(head, text="AI Omplanering V8 – Op10", style="Head.TLabel").pack(anchor="w")
-        ttk.Label(head, style="Sub.TLabel",
+        brand = ttk.Frame(head)
+        brand.pack(fill="x")
+        try:
+            logo = tk.PhotoImage(master=self, file=resource_path("Property 1=Black.png"))
+            scale = max(1, (logo.width() + 189) // 190, (logo.height() + 43) // 44)
+            self.logo_photo = logo.subsample(scale, scale)
+            ttk.Label(brand, image=self.logo_photo).pack(side="left", padx=(0, 16))
+        except (tk.TclError, OSError):
+            self.logo_photo = None
+        title_block = ttk.Frame(brand)
+        title_block.pack(side="left", fill="x", expand=True)
+        ttk.Label(title_block, text="AI Omplanering V8 – Op10",
+                  style="Head.TLabel").pack(anchor="w")
+        ttk.Label(title_block, style="Sub.TLabel",
                   text="Föreslår en ny ordning för Operation 10 som minskar förseningar. "
                        "Låsta och påbörjade operationer flyttas aldrig, och inget skrivs "
                        "till SQL förrän du bekräftar.").pack(anchor="w")
-        ttk.Label(head, style="Sub.TLabel",
+        ttk.Label(title_block, style="Sub.TLabel",
                   text="Gör så här: 1) välj datakälla  2) kontrollera parametrarna  "
                        "3) Kör omplanering  4) granska resultatet  "
                        "5) spara till SQL (endast SQL-läge). "
@@ -1467,13 +1515,39 @@ class App(tk.Tk):
             self._open(os.path.dirname(self.result.xlsx_path))
 
     def _open_doc(self) -> None:
-        doc = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "documentation_v8.html")
+        doc = resource_path("documentation_v8.html")
         if os.path.exists(doc):
             self._open(doc)
         else:
             messagebox.showinfo("Dokumentation saknas",
                                 "documentation_v8.html hittades inte bredvid appen.")
+
+    def _choose_excel_workbook(self) -> None:
+        self.source_mode.set("excel")
+        self._set_source_mode()
+        self._pick_input()
+
+    def _contact_support(self) -> None:
+        address = "support@dizparc.se"
+        try:
+            opened = webbrowser.open(
+                f"mailto:{address}?subject=AI%20Omplanering%20V8", new=1)
+        except webbrowser.Error:
+            opened = False
+        if not opened:
+            messagebox.showinfo("Dizparc support", address)
+
+    def _show_about(self) -> None:
+        messagebox.showinfo(
+            "Om AI Omplanering V8",
+            f"AI Omplanering V8 · version {core.VERSION}\n\n"
+            "Planeringsstöd för Operation 10 i Jeeves ERP. "
+            "Läs underlag från Excel eller SQL Server, granska ett "
+            "planeringsförslag och exportera Excel/CSV. SQL-resultat skrivs "
+            "bara efter uttrycklig bekräftelse.\n\n"
+            "Dokumentation: Hjälp → Dokumentation V8\n"
+            "Support: support@dizparc.se"
+        )
 
     # -- installningar ----------------------------------------------------
 
