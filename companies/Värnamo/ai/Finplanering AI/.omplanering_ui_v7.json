@@ -1,0 +1,1 @@
+{"input": "E:\\BI-Ages\\companies\\Värnamo\\ai\\Finplanering AI\\AI omplanering_V7.xlsx", "output": "E:\\BI-Ages\\companies\\Värnamo\\ai\\Finplanering AI\\output", "window_days": 20, "lock_horizon_hours": 4.0, "max_tardiness_days": 10.0, "score_cutoffs": ["2", "5", "10"], "score_rates": ["1", "1", "1", "1"]}

@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Omplanering V8 – dokumentation</title>
+  <style>
+    :root { color-scheme: light; --ink:#172b4d; --muted:#52627a; --blue:#1f3864; --line:#dce3ec; --paper:#f4f6f9; --warn:#8a5a00; --ok:#1e6b3a; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:#243247; font:16px/1.6 "Segoe UI",Arial,sans-serif; }
+    main { max-width:1000px; margin:36px auto; padding:36px 44px; background:#fff; border:1px solid var(--line); border-radius:12px; }
+    h1,h2,h3 { color:var(--blue); line-height:1.25; } h1 { margin:0 0 6px; }
+    h2 { margin-top:2.2em; padding-top:.6em; border-top:1px solid var(--line); }
+    .part { margin-top:3em; padding:14px 20px; border-radius:10px; background:var(--blue); color:#fff; }
+    .part h1 { color:#fff; font-size:26px; margin:0; }
+    .part p { margin:4px 0 0; color:#dbe5f4; }
+    .lead { color:var(--muted); font-size:18px; }
+    ol, ul { padding-left:24px; } li { margin:6px 0; }
+    .notice { padding:12px 18px; border-left:4px solid var(--blue); background:#eef4fc; }
+    .warn { padding:12px 18px; border-left:4px solid var(--warn); background:#fff6e5; }
+    .ok { padding:12px 18px; border-left:4px solid var(--ok); background:#ecf7ef; }
+    code, kbd { padding:1px 5px; background:#f1f3f6; border-radius:4px; overflow-wrap:anywhere; font-size:.93em; }
+    pre { background:#f1f3f6; padding:12px 14px; border-radius:6px; overflow-x:auto; font-size:14px; line-height:1.45; }
+    table { border-collapse:collapse; width:100%; margin:12px 0; font-size:15px; }
+    th, td { border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+    th { background:#f1f4f8; color:var(--ink); }
+    td.num, th.num { text-align:right; }
+    .audience { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:22px 0; }
+    .audience a { display:block; padding:16px; border:1px solid var(--line); border-radius:10px; text-decoration:none; color:inherit; }
+    .audience a:hover { border-color:var(--blue); background:#f7f9fc; }
+    .audience strong { display:block; color:var(--blue); font-size:17px; }
+    .flow { display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; margin:16px 0; }
+    .flow div { flex:1 1 150px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#f7f9fc; font-size:14px; }
+    .flow b { display:block; color:var(--blue); }
+    .flow .db { background:#fff6e5; border-color:#f0d9a8; }
+    nav.toc { columns:2; font-size:15px; }
+    nav.toc ol { margin:0; padding-left:0; list-style:none; }
+    a { color:#1757a6; }
+    footer { margin-top:3em; color:var(--muted); font-size:14px; border-top:1px solid var(--line); padding-top:12px; }
+    @media (max-width:720px) { main { margin:0; padding:22px; border:0; border-radius:0; } .audience { grid-template-columns:1fr; } nav.toc { columns:1; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>AI Omplanering V8 – Op10</h1>
+  <p class="lead">Ett Windows-program som föreslår en ny körordning för Operation 10
+    i Jeeves tillverkningsorder (AO), så att färre order blir försenade. Underlaget
+    läses från en Excel-arbetsbok eller direkt från SQL Server. Planen räknas fram
+    lokalt på datorn och sparas som Excel/CSV. I SQL-läge kan den granskade planen
+    sparas i databasen efter en uttrycklig bekräftelse.</p>
+
+  <div class="audience">
+    <a href="#del-a"><strong>Del A – Så fungerar appen</strong>Översikt, processflöde och grundprinciper. För alla.</a>
+    <a href="#del-b"><strong>Del B – Användarguide</strong>Steg för steg för planerare: Excel-läge, SQL-läge, parametrar och poängtrappa.</a>
+    <a href="#del-c"><strong>Del C – Teknisk dokumentation för IT</strong>Installation, krav, filer, nätverk, SQL-behörigheter, säkerhet och felsökning.</a>
+  </div>
+  <p class="notice">Den fullständiga beskrivningen av planeringslogiken – affärsregler,
+    låsning, kapacitet, status, kundvikt, poängtrappa, maxförsening, målordning och
+    kontroller – finns i lösningsspecifikationen
+    <a href="instuktion.md"><strong>instuktion.md</strong></a>. Se även <a href="#del-d">Del D</a>.</p>
+
+  <nav class="toc">
+    <ol>
+      <li><a href="#a1">A1. Vad appen gör</a></li>
+      <li><a href="#a2">A2. Processflöde</a></li>
+      <li><a href="#a3">A3. Grundprinciper och säkerhetsspärrar</a></li>
+      <li><a href="#b1">B1. Skärmens delar</a></li>
+      <li><a href="#b2">B2. Arbetsflöde i Excel-läge</a></li>
+      <li><a href="#b3">B3. Arbetsflöde i SQL-läge</a></li>
+      <li><a href="#b4">B4. Uppdatera källdata via procedur</a></li>
+      <li><a href="#b5">B5. Planeringsparametrar</a></li>
+      <li><a href="#b6">B6. Poängtrappa</a></li>
+      <li><a href="#b7">B7. Spara inställningar</a></li>
+      <li><a href="#b8">B8. Läsa resultatet</a></li>
+      <li><a href="#b9">B9. Vanliga meddelanden för användare</a></li>
+      <li><a href="#c1">C1. Arkitektur och komponenter</a></li>
+      <li><a href="#c2">C2. Systemkrav</a></li>
+      <li><a href="#c3">C3. Installation, uppgradering och avinstallation</a></li>
+      <li><a href="#c4">C4. Filer och platser</a></li>
+      <li><a href="#c5">C5. SQL-konfiguration (connection.json)</a></li>
+      <li><a href="#c6">C6. Nätverk och anslutning</a></li>
+      <li><a href="#c7">C7. SQL-objekt och behörigheter</a></li>
+      <li><a href="#c8">C8. Säkerhet och dataskydd</a></li>
+      <li><a href="#c9">C9. Bygg och release</a></li>
+      <li><a href="#c10">C10. Felsökning för IT</a></li>
+      <li><a href="#d1">D1. Planeringslogik – sammanfattning och länk</a></li>
+    </ol>
+  </nav>
+
+  <!-- ================================================================ -->
+  <div class="part" id="del-a"><h1>Del A – Så fungerar appen</h1><p>Översikt för alla läsare.</p></div>
+
+  <h2 id="a1">A1. Vad appen gör</h2>
+  <p>Appen tar dagens plan för Operation 10 och letar efter en bättre ordning
+    per produktionsgrupp och maskin. Den flyttar bara det som får flyttas, håller
+    planen fysiskt genomförbar och redovisar före/efter så att planeraren kan ta
+    ett beslut. Appen ändrar ingenting i Jeeves; resultatet är ett förslag.</p>
+  <ul>
+    <li><strong>Indata:</strong> planerad AO-lista med leveransdatum och status, alla
+      operationer, kalender med arbetstid, maskinprioritet per artikel och valfri
+      kundkonfiguration (vikt och maxförsening per order).</li>
+    <li><strong>Beräkning:</strong> en heuristisk planeringsmotor som körs lokalt på
+      användarens dator.</li>
+    <li><strong>Utdata:</strong> en Excel-fil och en CSV-fil med ny plan, status,
+      försening och en förklarande kommentar per order samt en sammanfattning.
+      I SQL-läge kan resultatet dessutom sparas som en ny körning i databasen.</li>
+  </ul>
+
+  <h2 id="a2">A2. Processflöde</h2>
+  <div class="flow">
+    <div><b>1. Datakälla</b>Excel-arbetsbok eller SQL Server (lösenord krävs)</div>
+    <div class="db"><b>2. Uppdatera källdata</b>Valfritt i SQL-läge: databasens procedur hämtar färsk data</div>
+    <div><b>3. Läs underlag</b>Validering av kolumner, datum och nycklar; varningar visas</div>
+    <div><b>4. Omplanera</b>Låsning, kapacitet, kalender, tak och poäng beräknas lokalt</div>
+    <div><b>5. Granska</b>Nyckeltal, sammanfattning, resultat per order, anmärkningar</div>
+    <div class="db"><b>6. Spara</b>Excel/CSV lokalt; i SQL-läge ny körning efter bekräftelse</div>
+  </div>
+  <p>Gula steg påverkar databasen och kräver alltid en bekräftelse i en dialogruta.
+    Övriga steg läser eller räknar bara.</p>
+
+  <h2 id="a3">A3. Grundprinciper och säkerhetsspärrar</h2>
+  <ul>
+    <li>Endast Operation 10 flyttas. Påbörjade operationer och operationer som
+      startar inom låshorisonten (standard 4 timmar) flyttas aldrig.</li>
+    <li>Planen ska vara fysiskt genomförbar: inga överlapp per maskin, endast
+      godkända maskiner, arbete bara inom kalenderns arbetstid.</li>
+    <li>Ingen order får bli mer försenad än sitt tak. Är ordern redan sen i
+      originalplanen får den inte bli sämre.</li>
+    <li>Fler gröna order (viktat med kundvikt) prioriteras före lägre förseningspoäng,
+      som i sin tur prioriteras före sparad ställtid.</li>
+    <li>Går det inte att hitta en giltig förbättring återställs originalplanen.</li>
+    <li>Att ansluta, läsa och beräkna skriver aldrig till SQL. Lösenordet sparas aldrig.</li>
+  </ul>
+
+  <!-- ================================================================ -->
+  <div class="part" id="del-b"><h1>Del B – Användarguide</h1><p>För planerare som använder appen.</p></div>
+
+  <h2 id="b1">B1. Skärmens delar</h2>
+  <p>Skärmen är numrerad i arbetsordning. <strong>Håll muspekaren över ett fält
+    eller en knapp</strong> för att se en förklaring.</p>
+  <table>
+    <tr><th>Del</th><th>Innehåll</th></tr>
+    <tr><td>1. Datakälla</td><td>Välj <em>Excel-arbetsbok</em> eller <em>SQL Server</em>.
+      I SQL-läge visas anslutningspanelen med stegen ①–⑤.</td></tr>
+    <tr><td>2. Planeringsparametrar</td><td>Klusterfönster, låshorisont och maxförsening
+      med enhet och förklaring, samt <em>💾 Spara inställningar</em> och
+      <em>Återställ standardvärden</em>.</td></tr>
+    <tr><td>3. Poängtrappa</td><td>Hur allvarlig en försening är, i redigerbara rader.</td></tr>
+    <tr><td>Knapprad</td><td><em>▶ Kör omplanering</em>, <em>Bekräfta och skriv till SQL</em>,
+      <em>Öppna Excel / CSV / mapp</em> och <em>Dokumentation V8</em>.</td></tr>
+    <tr><td>Nyckeltal</td><td>Före → efter: röda, gula och gröna order, förseningsdygn,
+      omplanerade, frysta, flyttade till alternativ maskin och sparad ställtid.</td></tr>
+    <tr><td>Flikar</td><td>Körlogg, Sammanfattning, Resultat per order och Anmärkningar.</td></tr>
+    <tr><td>Statusrad</td><td>Längst ned: vad appen gör just nu.</td></tr>
+  </table>
+
+  <h2 id="b2">B2. Arbetsflöde i Excel-läge</h2>
+  <ol>
+    <li>Välj <strong>Excel-arbetsbok</strong> under 1. Datakälla.</li>
+    <li>Välj arbetsbok (<code>.xlsx</code>) och utkatalog med <em>Bläddra…</em>.
+      Arbetsboken ska innehålla flikarna <code>tblSTGetAoColorCodeLis</code>,
+      <code>tblSTAllOperationsForAoNr</code>, <code>tblSTGetDateCalenderWorkingTime</code>,
+      <code>tblSTProductionGroupPrioOnItem</code> och valfritt <code>CustomerConfig</code>.</li>
+    <li>Kontrollera parametrar och poängtrappa.</li>
+    <li>Klicka <strong>▶ Kör omplanering</strong>.</li>
+    <li>Granska nyckeltal och flikar.</li>
+    <li>Öppna resultatet med <em>Öppna Excel</em> eller <em>Öppna CSV</em>.
+      Varje körning får nya filer (<code>…_v8_resultat_ÅÅÅÅMMDDttmmss.xlsx/.csv</code>);
+      arbetsboken du valde ändras inte.</li>
+  </ol>
+
+  <h2 id="b3">B3. Arbetsflöde i SQL-läge</h2>
+  <ol>
+    <li><strong>① Anslut</strong> – skriv SQL-lösenordet och klicka <em>Anslut</em>.
+      Server, databas och användare är förinställda av IT. Inget läses eller ändras.</li>
+    <li><strong>② Uppdatera källdata via procedur</strong> (valfritt) – kör databasens
+      uppdateringsprocedur så att källtabellerna får färsk data. Se B4.</li>
+    <li><strong>③ Läs tabeller från SQL</strong> – läser planeringsunderlaget.
+      Kontrollera körloggen och eventuella datavarningar.</li>
+    <li><strong>④ Kör omplanering</strong> – planen räknas lokalt och Excel/CSV skapas i utkatalogen.</li>
+    <li><strong>⑤ Bekräfta och skriv till SQL</strong> – när du granskat resultatet.
+      En ny körning med nytt RunId sparas; tidigare körningar ändras inte.</li>
+  </ol>
+  <p>Kör du proceduren igen efter att ha läst tabellerna behöver du läsa tabellerna
+    och köra omplaneringen på nytt; tidigare inläst data gäller då inte längre.</p>
+
+  <h2 id="b4">B4. Uppdatera källdata via procedur</h2>
+  <p>Proceduren kan ta lång tid. När du har bekräftat:</p>
+  <ul>
+    <li><strong>Appen väntar tills SQL Server svarar.</strong> Det finns som standard
+      ingen tidsgräns som avbryter en procedur som bara tar lång tid.</li>
+    <li>SQL-panelen visar en animerad väntindikator, aktuell fas och förfluten tid.
+      Indikatorn visar att appen väntar, inte hur många procent som är klart.</li>
+    <li>Meddelanden från proceduren visas i körloggen <em>när proceduren har svarat</em>, inte medan den kör.</li>
+    <li>Klarstatus visas först när ändringarna har sparats (commit) i databasen.</li>
+  </ul>
+  <h3>Avbryta</h3>
+  <p><strong>■ Avbryt procedur</strong> är aktiv medan proceduren körs. När du
+    bekräftar ber appen SQL Server att stoppa och rullar tillbaka.</p>
+  <p class="warn">Har proceduren själv sparat delar av arbetet innan avbrottet kan
+    det inte ångras av appen. Kontakta databasansvarig innan du kör igen.</p>
+
+  <h2 id="b5">B5. Planeringsparametrar</h2>
+  <table>
+    <tr><th>Parameter</th><th>Enhet</th><th class="num">Standard</th><th>Betydelse</th></tr>
+    <tr><td>Klusterfönster</td><td>dygn</td><td class="num">30</td><td>Order med samma artikel får
+      köras i följd för att spara ställtid om leveransdatum ligger inom så många dygn.
+      Större fönster ger mer sparad ställtid men kan flytta order längre från leveransdatum.</td></tr>
+    <tr><td>Låshorisont</td><td>timmar</td><td class="num">4</td><td>Operationer som startar inom
+      så många timmar från nu flyttas inte. 0 stänger av den framtida låsningen;
+      påbörjade operationer är alltid låsta. Decimaler tillåts (t.ex. 2,5).</td></tr>
+    <tr><td>Maxförsening</td><td>kalenderdagar</td><td class="num">10</td><td>En order får inte bli
+      mer försenad än så. Kundens eget <code>MaxLate</code> gäller före detta värde.
+      Är ordern redan mer försenad i originalplanen får den inte bli sämre än originalet.</td></tr>
+  </table>
+
+  <h2 id="b6">B6. Poängtrappa</h2>
+  <p>Varje rad ger poäng för ett antal dagar i förhållande till leveransdatum.
+    Positiva dagar = försenad, negativa dagar = klar före leveransdatum. Högre poäng
+    betyder att läget är viktigare att undvika. Motorn minimerar summan av
+    poäng × kundvikt. Sena dagar avrundas uppåt till hela dagar (1,2 dagar = 2);
+    tidiga dagar räknas i hela dagar (4,5 dagar tidigt = −4). Dagar före första
+    raden får första radens poäng.</p>
+  <table>
+    <tr><th class="num">Från dag</th><th class="num">Till dag</th><th class="num">Poäng</th></tr>
+    <tr><td class="num">-99</td><td class="num">0</td><td class="num">1</td></tr>
+    <tr><td class="num">1</td><td class="num">2</td><td class="num">2</td></tr>
+    <tr><td class="num">3</td><td class="num">4</td><td class="num">4</td></tr>
+    <tr><td class="num">5</td><td class="num">7</td><td class="num">9</td></tr>
+    <tr><td class="num">8</td><td class="num">9</td><td class="num">10</td></tr>
+    <tr><td class="num">10</td><td class="num">(tomt = obegränsat)</td><td class="num">20</td></tr>
+  </table>
+  <h3>Regler</h3>
+  <ol>
+    <li>Raderna ligger i stigande ordning.</li>
+    <li>Inga luckor eller överlapp: nästa rads Från = föregående rads Till + 1.</li>
+    <li>Dag 0 måste ingå (första radens Från är 0 eller lägre).</li>
+    <li>Sista raden ska ha tomt Till (obegränsat), och bara den.</li>
+    <li>Gränser är heltal; poäng är tal ≥ 0.</li>
+    <li>En tidighetsrad (Till under 0) ska ha lägre poäng än alla förseningsrader.</li>
+  </ol>
+  <h3>Order som inte ska bli klara för tidigt</h3>
+  <p>Vill ni undvika att order blir klara långt före leveransdatum lägger ni till
+    rader med negativa dagar, till exempel:</p>
+  <table>
+    <tr><th class="num">Från dag</th><th class="num">Till dag</th><th class="num">Poäng</th></tr>
+    <tr><td class="num">-99</td><td class="num">-15</td><td class="num">0,5</td></tr>
+    <tr><td class="num">-14</td><td class="num">0</td><td class="num">0</td></tr>
+    <tr><td class="num">1</td><td class="num">2</td><td class="num">2</td></tr>
+    <tr><td class="num">…</td><td class="num">…</td><td class="num">…</td></tr>
+  </table>
+  <p>Då föredrar motorn en körordning där ordern blir klar närmare leveransdatum.
+    Poängen påverkar bara ordningen – en ledig maskin hålls aldrig stilla för att
+    vänta. Poängen för att bli klar tidigt måste vara lägre än poängen för att bli
+    sen, annars stoppas körningen med ett radspecifikt fel.</p>
+  <h3>Knappar</h3>
+  <ul>
+    <li><strong>+ Lägg till</strong> – delar sista raden och lägger till en ny obegränsad rad efter.</li>
+    <li><strong>▲ / ▼</strong> – flyttar en rad upp eller ned.</li>
+    <li><strong>−</strong> – tar bort en rad och sluter luckan mot grannraden.</li>
+    <li><strong>⇅ Sortera och rätta</strong> – sorterar efter Från dag och tömmer Till på
+      sista raden. Luckor, överlapp och för höga tidighetspoäng rättas inte
+      automatiskt; de visas med radnummer.</li>
+  </ul>
+  <p class="notice">Exempel: står raden <code>-99 → -5</code> sist och raden
+    <code>10 → 20000</code> näst sist får du ett fel som pekar ut raden. Klicka
+    <em>⇅ Sortera och rätta</em> så flyttas tidighetsraden först och sista raden blir
+    obegränsad. Har tidighetsraden högre poäng än en förseningsrad visas det som
+    nästa sak att rätta.</p>
+
+  <h2 id="b7">B7. Spara inställningar</h2>
+  <ul>
+    <li><strong>💾 Spara inställningar</strong> sparar parametrar, poängtrappa och sökvägar direkt.</li>
+    <li>Inställningarna sparas också automatiskt när du ansluter, kör omplanering och stänger appen.</li>
+    <li>Är ett fält ogiltigt sparas övriga fält, medan det ogiltiga behåller sitt
+      tidigare sparade värde. Du får besked om vad som inte sparades.</li>
+    <li><strong>Återställ standardvärden</strong> återställer parametrar och poängtrappa; sökvägarna behålls.</li>
+    <li>Inställningarna finns kvar efter uppdatering av appen. Lösenordet sparas aldrig.</li>
+  </ul>
+
+  <h2 id="b8">B8. Läsa resultatet</h2>
+  <table>
+    <tr><th>Flik</th><th>Innehåll</th></tr>
+    <tr><td>Körlogg</td><td>Vad appen gjort, SQL-meddelanden och eventuella fel.</td></tr>
+    <tr><td>Sammanfattning</td><td>Före/efter för samma orderpopulation: status, förseningar,
+      poäng, takutfall, frysta order, omruttningar, klustringar, sparad ställtid och
+      alla parametervärden som användes.</td></tr>
+    <tr><td>Resultat per order</td><td>Ny start/slut, maskin, status, försening och en
+      kommentar på svenska som förklarar beslutet.</td></tr>
+    <tr><td>Anmärkningar</td><td>Datavarningar och order som inte kunde planeras, med orsak.</td></tr>
+  </table>
+  <p><strong>Statusfärger:</strong> Grön = marginal mer än 1 dag före leverans,
+    Gul = exakt 1 dag, Röd = mindre än 1 dag. Jeeves originalstatus visas separat.
+    Röd betyder inte alltid försenad – försening räknas först när ordern blir klar efter leveransdatum.</p>
+
+  <h2 id="b9">B9. Vanliga meddelanden för användare</h2>
+  <table>
+    <tr><th>Meddelande</th><th>Vad du gör</th></tr>
+    <tr><td>Lösenord saknas / Login failed</td><td>Skriv rätt SQL-lösenord. Fungerar det inte, kontakta IT.</td></tr>
+    <tr><td>Rad N: … (poängtrappa)</td><td>Rätta raden enligt meddelandet eller använd <em>⇅ Sortera och rätta</em>.</td></tr>
+    <tr><td>Delvis sparat</td><td>Ett fält var ogiltigt och behöll sitt gamla värde. Rätta och spara igen.</td></tr>
+    <tr><td>Procedur avbruten</td><td>Du avbröt proceduren. Kontrollera med databasansvarig innan du kör igen.</td></tr>
+    <tr><td>EXECUTE permission was denied</td><td>Du saknar behörighet att köra proceduren. Kontakta IT/databasansvarig.</td></tr>
+    <tr><td>Saknade kolumner / flikar</td><td>Underlaget följer inte förväntat format. Kontrollera arbetsboken eller kontakta IT.</td></tr>
+  </table>
+
+  <!-- ================================================================ -->
+  <div class="part" id="del-c"><h1>Del C – Teknisk dokumentation för IT</h1><p>Installation, drift, säkerhet och felsökning.</p></div>
+
+  <h2 id="c1">C1. Arkitektur och komponenter</h2>
+  <p>AI Omplanering V8 är en fristående Windows-skrivbordsapplikation (tjock klient).
+    Det finns ingen server, webbtjänst eller bakgrundstjänst. All beräkning sker i
+    användarens process.</p>
+  <table>
+    <tr><th>Komponent</th><th>Ansvar</th></tr>
+    <tr><td><code>AI-Omplanering-V8.exe</code></td><td>Grafiskt gränssnitt (Python/Tkinter), körs i användarens kontext utan konsolfönster.</td></tr>
+    <tr><td>Planeringsmotor (<code>omplanering_core_v8</code>)</td><td>Validering, omplanering och export till Excel/CSV.</td></tr>
+    <tr><td>SQL-moduler (<code>service/*_v8</code>)</td><td>Konfiguration, anslutning, läsning, uppdateringsprocedur och resultatskrivning via <code>pyodbc</code>.</td></tr>
+    <tr><td>Microsoft ODBC Driver 18</td><td>Separat installerad drivrutin för SQL Server (endast SQL-läge).</td></tr>
+  </table>
+  <p>Programmet är byggt med PyInstaller (Python 3.13) och installeras med en
+    Inno Setup-installerare. Python behöver inte vara installerat på klienten.
+    Programmet gör inga nätverksanrop utöver anslutningen till den konfigurerade
+    SQL Servern; det finns ingen telemetri eller automatisk uppdatering.</p>
+
+  <h2 id="c2">C2. Systemkrav</h2>
+  <table>
+    <tr><th>Krav</th><th>Excel-läge</th><th>SQL-läge</th></tr>
+    <tr><td>Operativsystem</td><td colspan="2">Windows 10/11 eller Windows Server, 64-bit</td></tr>
+    <tr><td>Behörighet vid installation</td><td colspan="2">Lokal administratör (installation under Program Files)</td></tr>
+    <tr><td>Behörighet vid körning</td><td colspan="2">Standardanvändare</td></tr>
+    <tr><td>Microsoft ODBC Driver 18 for SQL Server (x64)</td><td>Behövs inte</td><td>Krävs</td></tr>
+    <tr><td>Nätverk</td><td>Behövs inte</td><td>TCP till SQL Server (standard 1433)</td></tr>
+    <tr><td>SQL-inloggning</td><td>Behövs inte</td><td>SQL Server-autentisering (användare + lösenord)</td></tr>
+    <tr><td>Microsoft Excel</td><td colspan="2">Rekommenderas för att öppna resultatfilen, krävs inte för att köra appen</td></tr>
+  </table>
+
+  <h2 id="c3">C3. Installation, uppgradering och avinstallation</h2>
+  <h3>Installation</h3>
+  <ol>
+    <li>Ladda ned <code>AI-Omplanering-V8-Setup.exe</code> (se C9) och packa upp zip-filen först;
+      kör inte installeraren direkt inifrån zip-filen.</li>
+    <li>Kör installeraren som administratör. Standardsökväg:
+      <code>C:\Program Files\Dizparc\AI Omplanering V8\</code>.</li>
+    <li>Startmenygenväg skapas alltid; skrivbordsgenväg är valfri.</li>
+    <li>Installera Microsoft ODBC Driver 18 for SQL Server om SQL-läget ska användas.</li>
+    <li>Starta appen en gång som användaren; då skapas användarens <code>connection.json</code> (se C5).</li>
+  </ol>
+  <h3>Tyst installation (t.ex. Intune, SCCM, GPO-skript)</h3>
+  <pre>AI-Omplanering-V8-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG="C:\Temp\ai-omplanering-v8-install.log"</pre>
+  <p>Avinstallation sker via <em>Inställningar → Appar</em> eller tyst med
+    <code>"C:\Program Files\Dizparc\AI Omplanering V8\unins000.exe" /VERYSILENT</code>.</p>
+  <h3>Uppgradering</h3>
+  <p>Kör den nya installeraren ovanpå den gamla; samma AppId gör att den ersätter
+    den tidigare versionen. Användarens <code>connection.json</code> och
+    <code>settings.json</code> berörs inte. Nya konfigurationsnycklar får sina
+    standardvärden automatiskt.</p>
+  <h3>Avinstallation</h3>
+  <p>Programfilerna tas bort. Användarfilerna i <code>%APPDATA%</code> lämnas kvar
+    avsiktligt och kan tas bort manuellt.</p>
+  <h3>Om installationen blockeras</h3>
+  <ul>
+    <li><em>”Det gick inte att komma åt den angivna enheten, sökvägen eller filen”</em> beror
+      oftast på att filen körs inifrån zip, är märkt som nedladdad från internet
+      (högerklicka → Egenskaper → <em>Avblockera</em>) eller blockeras av AppLocker/WDAC/antivirus.</li>
+    <li>Installeraren är inte kodsignerad. SmartScreen kan därför varna; IT kan
+      vitlista filen, signera den med företagets certifikat eller distribuera den centralt.</li>
+    <li>Alternativ till lokal installation: publicera appen via RemoteApp/RDS, eller
+      installera på en terminalserver. En delad nätverksmapp fungerar också men
+      kräver fortfarande ODBC-drivrutinen på varje klient och kan stoppas av samma policy.</li>
+  </ul>
+
+  <h2 id="c4">C4. Filer och platser</h2>
+  <table>
+    <tr><th>Sökväg</th><th>Innehåll</th><th>Skrivs av</th></tr>
+    <tr><td><code>C:\Program Files\Dizparc\AI Omplanering V8\</code></td><td>Programfiler, denna dokumentation, <code>instuktion.md</code> och <code>README_v8.md</code> (under <code>_internal\</code>)</td><td>Installeraren</td></tr>
+    <tr><td><code>%APPDATA%\VarnamoFinplaneringAI\V8\connection.json</code></td><td>SQL-konfiguration per användare (inget lösenord)</td><td>Appen vid första start; därefter IT</td></tr>
+    <tr><td><code>%APPDATA%\VarnamoFinplaneringAI\V8\settings.json</code></td><td>Parametrar, poängtrappa, senaste sökvägar</td><td>Appen</td></tr>
+    <tr><td>Vald utkatalog</td><td><code>&lt;namn&gt;_v8_resultat_&lt;tidsstämpel&gt;.xlsx</code> och <code>.csv</code></td><td>Appen vid varje körning</td></tr>
+    <tr><td><code>%TEMP%\Setup Log *.txt</code></td><td>Installationslogg</td><td>Installeraren</td></tr>
+  </table>
+  <p>Konfigurationsfilerna skrivs atomärt (via en temporär fil) så att en avbruten
+    skrivning inte förstör befintliga inställningar. Körloggen visas i appen och
+    sparas inte som fil.</p>
+
+  <h2 id="c5">C5. SQL-konfiguration (connection.json)</h2>
+  <p>Filen skapas med lösningsägarens standardvärden vid första start. Befintliga
+    filer skrivs aldrig över. Den öppnas från appen med <em>Öppna SQL-konfiguration</em>;
+    starta om appen efter ändring.</p>
+  <pre>{
+  "server_name": "tcp:&lt;server&gt;,1433",
+  "database": "&lt;databas&gt;",
+  "username": "&lt;sql-användare&gt;",
+  "odbc_driver": "ODBC Driver 18 for SQL Server",
+  "encrypt": "yes",
+  "trust_server_certificate": "yes",
+  "connection_timeout": 25,
+  "query_timeout": 300,
+  "refresh_timeout": 0,
+  "refresh_procedure": "dbo.sp_Fill_All_Tables",
+  "refresh_parameters": []
+}</pre>
+  <table>
+    <tr><th>Nyckel</th><th>Betydelse</th></tr>
+    <tr><td><code>server_name</code></td><td>SQL Server-instans. Formatet <code>tcp:server,port</code> tvingar TCP och undviker SQL Browser.</td></tr>
+    <tr><td><code>database</code>, <code>username</code></td><td>Databas och SQL-inloggning. Lösenordet anges i appen vid varje session.</td></tr>
+    <tr><td><code>odbc_driver</code></td><td>Exakt namn på installerad drivrutin (se <em>ODBC-datakällor (64-bit) → Drivrutiner</em>).</td></tr>
+    <tr><td><code>encrypt</code></td><td><code>yes</code>/<code>no</code>. Kryptering av anslutningen.</td></tr>
+    <tr><td><code>trust_server_certificate</code></td><td><code>yes</code> krypterar men verifierar inte servercertifikatet. Sätt <code>no</code> när servern har ett certifikat som klienterna litar på.</td></tr>
+    <tr><td><code>connection_timeout</code></td><td>Sekunder för att etablera anslutningen.</td></tr>
+    <tr><td><code>query_timeout</code></td><td>Sekunder per fråga vid läsning och resultatskrivning.</td></tr>
+    <tr><td><code>refresh_timeout</code></td><td>Sekunder för uppdateringsproceduren. <code>0</code> = vänta tills SQL Server svarar (standard). Användaren kan avbryta manuellt.</td></tr>
+    <tr><td><code>refresh_procedure</code></td><td>Tvådelat namn <code>schema.procedur</code>. Tomt värde gör steg ② inaktivt.</td></tr>
+    <tr><td><code>refresh_parameters</code></td><td>Lista med namngivna parametrar som skickas bundna, t.ex. <code>[{"name": "Parameternamn", "value": 1}]</code>.</td></tr>
+  </table>
+  <p>Alla värden valideras vid start; namn på procedur, tabeller och parametrar måste
+    vara giltiga SQL-identifierare. Ogiltig konfiguration stoppar SQL-läget med ett
+    meddelande, medan Excel-läget fortsätter att fungera. Vill IT distribuera en
+    gemensam konfiguration kan filen kopieras till varje användares
+    <code>%APPDATA%\VarnamoFinplaneringAI\V8\</code> innan appen startas första gången.</p>
+
+  <h2 id="c6">C6. Nätverk och anslutning</h2>
+  <ul>
+    <li>Utgående TCP från klienten till SQL Server, standardport <strong>1433</strong>.
+      Används en namngiven instans utan fast port krävs även UDP 1434 (SQL Browser);
+      fast port i <code>server_name</code> rekommenderas.</li>
+    <li>Anslutningen görs med ODBC: <code>Driver</code>, <code>Server</code>, <code>Database</code>,
+      <code>UID</code>, <code>PWD</code>, <code>Encrypt</code>, <code>TrustServerCertificate</code>
+      och <code>Connection Timeout</code>.</li>
+    <li>Testa nåbarhet från klienten:
+      <pre>Test-NetConnection -ComputerName &lt;server&gt; -Port 1433
+Get-OdbcDriver | Where-Object Name -like "*SQL Server*" | Select-Object Name, Platform</pre></li>
+  </ul>
+
+  <h2 id="c7">C7. SQL-objekt och behörigheter</h2>
+  <table>
+    <tr><th>Objekt</th><th>Användning</th><th>Behörighet</th></tr>
+    <tr><td><code>dbo.tblSTGetAoColorCodeList</code></td><td>Planerade AO med leveransdatum och status (baslinje)</td><td>SELECT</td></tr>
+    <tr><td><code>dbo.tblSTAllOperationsForAoNr</code></td><td>Alla operationer per AO</td><td>SELECT</td></tr>
+    <tr><td><code>dbo.tblSTGetDateCalenderWorkingTime</code></td><td>Kalender och arbetstid</td><td>SELECT</td></tr>
+    <tr><td><code>dbo.tblSTProductionGroupPrioOnItem</code></td><td>Maskinprioritet per artikel</td><td>SELECT</td></tr>
+    <tr><td><code>dbo.CustomerConfig</code></td><td>Kundvikt och maxförsening (valfri; saknas den används standard)</td><td>SELECT</td></tr>
+    <tr><td><code>dbo.sp_Fill_All_Tables</code></td><td>Uppdateringsprocedur, steg ② (valfri)</td><td>EXECUTE</td></tr>
+    <tr><td><code>dbo.tblAIAnglysisRun</code></td><td>En rad per sparad körning (RunId, tidpunkt, parametrar, värddatornamn, sammanfattning)</td><td>SELECT, INSERT</td></tr>
+    <tr><td><code>dbo.tblAIAnglysisGetAoColorCodeList</code></td><td>Resultatrader per körning</td><td>SELECT, INSERT</td></tr>
+  </table>
+  <p>Resultatskrivningen sker i en transaktion: körning och resultatrader läggs till
+    med samma RunId och rullas tillbaka helt vid fel. Appen raderar eller uppdaterar
+    aldrig tidigare körningar. Exempel på minsta behörighet (ersätt
+    <code>&lt;sql-användare&gt;</code>):</p>
+  <pre>GRANT SELECT ON dbo.tblSTGetAoColorCodeList             TO [&lt;sql-användare&gt;];
+GRANT SELECT ON dbo.tblSTAllOperationsForAoNr           TO [&lt;sql-användare&gt;];
+GRANT SELECT ON dbo.tblSTGetDateCalenderWorkingTime     TO [&lt;sql-användare&gt;];
+GRANT SELECT ON dbo.tblSTProductionGroupPrioOnItem      TO [&lt;sql-användare&gt;];
+GRANT SELECT ON dbo.CustomerConfig                      TO [&lt;sql-användare&gt;];
+GRANT SELECT, INSERT ON dbo.tblAIAnglysisRun                  TO [&lt;sql-användare&gt;];
+GRANT SELECT, INSERT ON dbo.tblAIAnglysisGetAoColorCodeList   TO [&lt;sql-användare&gt;];
+-- Endast om steg ② ska användas och proceduren är granskad:
+GRANT EXECUTE ON dbo.sp_Fill_All_Tables                 TO [&lt;sql-användare&gt;];</pre>
+  <p class="warn">Uppdateringsproceduren körs med användarens rättigheter (eller
+    procedurägarens via ownership chaining). Granska dess sidoeffekter och om den gör
+    egna commits innan EXECUTE beviljas. Vid avbrott eller fel kan appen bara rulla
+    tillbaka det som inte redan har committats inne i proceduren.</p>
+
+  <h2 id="c8">C8. Säkerhet och dataskydd</h2>
+  <ul>
+    <li><strong>Lösenord:</strong> anges av användaren vid varje session, hålls endast i
+      minnet, sparas aldrig i fil och ersätts med <code>&lt;redacted&gt;</code> i fel och logg.</li>
+    <li><strong>SQL-injektion:</strong> procedur-, tabell- och parameternamn valideras mot
+      ett strikt identifierarmönster; parametervärden skickas bundna.</li>
+    <li><strong>Skrivningar:</strong> sker bara efter uttrycklig bekräftelse; anslutning,
+      läsning och beräkning skriver aldrig. Om server eller databas i konfigurationen
+      ändrats sedan data lästes stoppas skrivningen.</li>
+    <li><strong>Kryptering:</strong> <code>encrypt=yes</code> rekommenderas. Standardvärdet
+      <code>trust_server_certificate=yes</code> är en övergångslösning tills servern har
+      ett betrott certifikat.</li>
+    <li><strong>Data på klienten:</strong> resultatfilerna i utkatalogen innehåller
+      planeringsdata (ordernummer, artiklar, datum, kundkopplingar). Placera utkatalogen
+      på en plats med lämplig åtkomstkontroll.</li>
+    <li><strong>Spårbarhet:</strong> varje sparad körning får RunId, tidpunkt och klientens
+      värddatornamn i <code>dbo.tblAIAnglysisRun</code>.</li>
+    <li><strong>Rekommendation:</strong> använd en dedikerad SQL-inloggning med minsta behörighet enligt C7.</li>
+  </ul>
+
+  <h2 id="c9">C9. Bygg och release</h2>
+  <ol>
+    <li>Ändringar granskas och slås ihop till <code>main</code> i GitHub-repositoryt.</li>
+    <li>GitHub Actions-arbetsflödet <em>Build AI Omplanering V8 installer</em> startas manuellt
+      med ett versionsnummer (t.ex. <code>8.3.0</code>).</li>
+    <li>Arbetsflödet kör alla tester, bygger programmet med PyInstaller och installeraren med Inno Setup.</li>
+    <li>Installeraren laddas ned under <em>Artifacts</em> i körningen
+      (<code>AI-Omplanering-V8-Setup-&lt;version&gt;</code>, sparas i 30 dagar) och distribueras enligt C3.</li>
+  </ol>
+  <p>Lokal byggning (utvecklare):</p>
+  <pre>python -m pip install -r requirements-build-v8.txt
+pyinstaller --noconfirm --clean packaging\finplanering_v8.spec
+$env:APP_VERSION = "8.3.0"
+iscc packaging\finplanering_v8.iss</pre>
+
+  <h2 id="c10">C10. Felsökning för IT</h2>
+  <table>
+    <tr><th>Fel</th><th>Orsak</th><th>Åtgärd</th></tr>
+    <tr><td><code>Data source name not found and no default driver specified (IM002)</code></td>
+      <td>ODBC-drivrutinen saknas eller namnet i <code>odbc_driver</code> stämmer inte.</td>
+      <td>Installera ODBC Driver 18 (x64) och kopiera exakt namn till <code>odbc_driver</code>.</td></tr>
+    <tr><td><code>Login timeout expired</code> / <code>TCP Provider</code></td>
+      <td>Servern nås inte: fel namn/port, brandvägg eller SQL Browser.</td>
+      <td>Använd <code>tcp:server,1433</code> och testa med <code>Test-NetConnection</code>.</td></tr>
+    <tr><td><code>The certificate chain was issued by an authority that is not trusted</code></td>
+      <td>Kryptering med servercertifikat som klienten inte litar på.</td>
+      <td>Installera betrott certifikat på servern, eller tills vidare <code>trust_server_certificate: "yes"</code>.</td></tr>
+    <tr><td><code>Login failed for user</code> (18456)</td>
+      <td>Fel lösenord, låst inloggning eller SQL-autentisering avstängd.</td>
+      <td>Kontrollera inloggningen och att servern tillåter SQL Server-autentisering.</td></tr>
+    <tr><td><code>The EXECUTE permission was denied</code> (229)</td>
+      <td>Saknad behörighet på proceduren.</td>
+      <td>Bevilja EXECUTE enligt C7 efter granskning.</td></tr>
+    <tr><td><code>The SELECT/INSERT permission was denied</code></td>
+      <td>Saknad behörighet på käll- eller resultattabell.</td>
+      <td>Bevilja behörighet enligt C7.</td></tr>
+    <tr><td><code>Query timeout expired (HYT00)</code></td>
+      <td>En tidsgräns nåddes: <code>query_timeout</code> (läsning/skrivning) eller positiv <code>refresh_timeout</code>.</td>
+      <td>Undersök blockering och körtid. För proceduren: <code>refresh_timeout: 0</code>. Kontrollera sidoeffekter innan omkörning.</td></tr>
+    <tr><td><code>Invalid object name</code></td>
+      <td>Tabell eller procedur saknas i databasen.</td>
+      <td>Kontrollera <code>database</code> och att objekten i C7 finns.</td></tr>
+    <tr><td>Fel i <code>connection.json</code> vid start</td>
+      <td>Ogiltig JSON eller ogiltigt värde (t.ex. negativ timeout).</td>
+      <td>Rätta filen eller ta bort den; appen skapar då en ny med standardvärden.</td></tr>
+    <tr><td>Installationen blockeras</td>
+      <td>Zip, Mark-of-the-Web, AppLocker/WDAC/antivirus eller saknad administratörsrätt.</td>
+      <td>Se C3 <em>Om installationen blockeras</em>.</td></tr>
+  </table>
+
+  <!-- ================================================================ -->
+  <div class="part" id="del-d"><h1>Del D – Planeringslogik</h1><p>Sammanfattning och länk till fullständig specifikation.</p></div>
+
+  <h2 id="d1">D1. Planeringslogik – sammanfattning och länk</h2>
+  <p>Planeringsmotorn följer en strikt prioritetsordning där ett lägre mål aldrig
+    får försämra ett högre:</p>
+  <ol>
+    <li>Hårda regler: data, låsning, maskin, kalender och operationsordning.</li>
+    <li>Varje order inom sitt tak; order som redan är över taket blir inte sämre.</li>
+    <li>Så många gröna order som möjligt, viktat med kundvikt.</li>
+    <li>Så låg kundviktad förseningspoäng som möjligt (poängtrappan).</li>
+    <li>Minsta största försening och ingen onödig tidighet.</li>
+    <li>Mindre ställtid, färre maskinbyten och planändringar.</li>
+  </ol>
+  <p>Grundordningen är leveransdatum (EDD) per produktionsgrupp. Artiklar klustras
+    bara när det sparar verklig ställtid utan att skada högre mål, och alternativa
+    maskiner används bara om de är godkända. Bryter en kandidatplan ett tak låses
+    berörd order på sin ursprungliga plats och övriga planeras om; går det ändå inte
+    återställs hela originalplanen. Motorn är heuristisk och garanterar inte den bästa
+    möjliga planen.</p>
+  <p class="ok">Fullständig beskrivning av kontext, affärsregler, datamodell,
+    validering, poängtrappa, målordning, SQL-flöde, säkerhet och acceptanskriterier:
+    <a href="instuktion.md"><strong>instuktion.md – lösningsspecifikation</strong></a>.
+    Filen ligger bredvid denna dokumentation (i installationsmappen under
+    <code>_internal\</code>) och kan öppnas i valfri texteditor eller Markdown-läsare.</p>
+
+  <footer>AI Omplanering V8 · Dizparc Värnamo · Dokumentationen beskriver den
+    aktuella versionen och levereras med installationen.</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,1777 @@
+<meta charset="utf-8">
+<title>Omplaneringsmotorn Op10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+
+<style>
+/* ---------------------------------------------------------------
+   Palett: instrumentpanel. Petrol accent hålls medvetet borta från
+   grön/gul/röd, eftersom de färgerna bär betydelse i innehållet.
+   --------------------------------------------------------------- */
+:root {
+  --paper:      #f6f7f4;
+  --surface:    #ffffff;
+  --surface-2:  #eef1ed;
+  --ink:        #171f26;
+  --ink-2:      #3a4750;
+  --muted:      #5d6a72;
+  --rule:       #dbe0da;
+  --rule-hard:  #c2cac3;
+  --accent:     #0d5866;
+  --accent-2:   #14788b;
+  --accent-wash:#e2eef0;
+
+  --ok:      #1c6f39;
+  --ok-wash: #dff0e2;
+  --bad:     #b3372a;
+  --bad-wash:#fae0db;
+  --warn:    #94670a;
+  --warn-wash:#faeecd;
+  --frost:   #37608f;
+  --frost-wash:#e0e9f4;
+
+  --shadow: 0 1px 2px rgba(23,31,38,.06), 0 8px 24px -16px rgba(23,31,38,.28);
+
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #0e1417;
+    --surface:    #151d21;
+    --surface-2:  #1b262b;
+    --ink:        #e4ebe8;
+    --ink-2:      #c2cdcb;
+    --muted:      #93a3a8;
+    --rule:       #26343a;
+    --rule-hard:  #3a4c53;
+    --accent:     #5fb7c8;
+    --accent-2:   #8ed2df;
+    --accent-wash:#15303a;
+
+    --ok:      #6ed08c;
+    --ok-wash: #143122;
+    --bad:     #ff8f7d;
+    --bad-wash:#3a1a15;
+    --warn:    #e5bc5c;
+    --warn-wash:#332707;
+    --frost:   #8fb6e6;
+    --frost-wash:#16263a;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.8);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:      #0e1417;
+  --surface:    #151d21;
+  --surface-2:  #1b262b;
+  --ink:        #e4ebe8;
+  --ink-2:      #c2cdcb;
+  --muted:      #93a3a8;
+  --rule:       #26343a;
+  --rule-hard:  #3a4c53;
+  --accent:     #5fb7c8;
+  --accent-2:   #8ed2df;
+  --accent-wash:#15303a;
+
+  --ok:      #6ed08c;
+  --ok-wash: #143122;
+  --bad:     #ff8f7d;
+  --bad-wash:#3a1a15;
+  --warn:    #e5bc5c;
+  --warn-wash:#332707;
+  --frost:   #8fb6e6;
+  --frost-wash:#16263a;
+
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.8);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------- Ramverk ---------------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px 96px;
+}
+
+nav.toc {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 32px 0 32px;
+  font-family: var(--sans);
+  font-size: 13px;
+  border-right: 1px solid var(--rule);
+}
+nav.toc .toc-title {
+  font-size: 10.5px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+nav.toc ol { list-style: none; margin: 0; padding: 0 16px 0 0; counter-reset: toc; }
+nav.toc li { margin: 0 0 1px; }
+nav.toc a {
+  display: flex;
+  gap: 10px;
+  padding: 5px 8px 5px 0;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-radius: 3px;
+  line-height: 1.35;
+}
+nav.toc a::before {
+  counter-increment: toc;
+  content: counter(toc, decimal-leading-zero);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding-top: 1px;
+  flex: none;
+}
+nav.toc a:hover { color: var(--accent); }
+nav.toc a:hover::before { color: var(--accent); }
+nav.toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { padding-top: 32px; min-width: 0; }
+
+/* ---------------- Rubrik ---------------- */
+
+header.masthead {
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 22px;
+  margin-bottom: 30px;
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+h1 {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: clamp(30px, 4.2vw, 43px);
+  line-height: 1.08;
+  letter-spacing: -.022em;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+.standfirst {
+  font-size: 18.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 62ch;
+  margin: 0;
+}
+.byline {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+
+/* ---------------- Nyckeltal ---------------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin: 0 0 42px;
+}
+.kpi { background: var(--surface); padding: 15px 16px 14px; }
+.kpi .n {
+  font-family: var(--sans);
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  display: block;
+}
+.kpi .l {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.35;
+  display: block;
+  margin-top: 5px;
+}
+.kpi.is-ok .n { color: var(--ok); }
+.kpi.is-bad .n { color: var(--bad); }
+.kpi.is-accent .n { color: var(--accent); }
+
+/* ---------------- Sektioner ---------------- */
+
+section { margin: 0 0 56px; scroll-margin-top: 20px; }
+h2 {
+  font-family: var(--sans);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -.014em;
+  line-height: 1.2;
+  margin: 0 0 6px;
+  padding-top: 6px;
+  text-wrap: balance;
+}
+h2 .num {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  margin-right: 10px;
+  vertical-align: 3px;
+}
+.deck {
+  color: var(--muted);
+  font-size: 15px;
+  margin: 0 0 22px;
+  max-width: var(--measure);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 16px;
+}
+h3 {
+  font-family: var(--sans);
+  font-size: 15.5px;
+  font-weight: 600;
+  margin: 30px 0 8px;
+  letter-spacing: -.005em;
+}
+h4 {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 20px 0 6px;
+  letter-spacing: .01em;
+}
+p { margin: 0 0 14px; max-width: var(--measure); }
+ul, ol { max-width: var(--measure); padding-left: 20px; margin: 0 0 14px; }
+li { margin-bottom: 6px; }
+a { color: var(--accent); }
+
+code, .f {
+  font-family: var(--mono);
+  font-size: .855em;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+pre {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 0 0 18px;
+  color: var(--ink-2);
+}
+pre code { background: none; padding: 0; font-size: inherit; white-space: pre; }
+pre .c { color: var(--muted); font-style: italic; }
+pre .k { color: var(--accent-2); font-weight: 500; }
+
+/* ---------------- Tabeller ---------------- */
+
+.tw { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--rule); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-family: var(--sans); font-size: 13px; }
+th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th {
+  background: var(--surface-2);
+  font-size: 10.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--rule-hard);
+}
+tbody tr:last-child td { border-bottom: none; }
+td.mono, th.mono { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
+
+.pill {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  padding: 2px 7px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.pill.ok    { background: var(--ok-wash);    color: var(--ok); }
+.pill.bad   { background: var(--bad-wash);   color: var(--bad); }
+.pill.warn  { background: var(--warn-wash);  color: var(--warn); }
+.pill.frost { background: var(--frost-wash); color: var(--frost); }
+.pill.neut  { background: var(--surface-2);  color: var(--muted); }
+
+/* ---------------- Tvåspårsregler: verksamhet | teknik ---------------- */
+
+.lanes { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-bottom: 22px; }
+.lane-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--rule);
+}
+.lane-head div {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+}
+.rule-row { background: var(--surface); }
+.rule-row > .rule-title {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 12px 16px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.rule-title .ref {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.rule-body { display: grid; grid-template-columns: 1fr 1fr; }
+.rule-body > div { padding: 8px 16px 15px; font-size: 14px; line-height: 1.55; }
+.rule-body > div:first-child { border-right: 1px solid var(--rule); }
+.rule-body p { margin: 0 0 8px; max-width: none; }
+.rule-body p:last-child { margin-bottom: 0; }
+.rule-body .biz { font-family: var(--serif); }
+.rule-body .tech { font-family: var(--sans); font-size: 13px; color: var(--ink-2); }
+.rule-body .tech code { font-size: 12px; }
+
+/* ---------------- Noteringar ---------------- */
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 13px 18px;
+  margin: 0 0 20px;
+  max-width: var(--measure);
+  font-size: 14.5px;
+}
+.note.flag { border-left-color: var(--warn); background: var(--warn-wash); }
+.note.stop { border-left-color: var(--bad); background: var(--bad-wash); }
+.note > :last-child { margin-bottom: 0; }
+.note .h {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* ---------------- Figurer ---------------- */
+
+figure { margin: 0 0 26px; }
+figure svg { display: block; width: 100%; height: auto; }
+.figframe { border: 1px solid var(--rule); background: var(--surface); padding: 18px 16px; overflow-x: auto; }
+figcaption {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 9px;
+  line-height: 1.45;
+  max-width: var(--measure);
+}
+
+/* SVG-klasser hämtar färg ur temat */
+.s-fill-surface { fill: var(--surface); }
+.s-fill-ink     { fill: var(--ink); }
+.s-fill-muted   { fill: var(--muted); }
+.s-fill-accent  { fill: var(--accent); }
+.s-fill-wash    { fill: var(--accent-wash); }
+.s-fill-ok      { fill: var(--ok); }
+.s-fill-okw     { fill: var(--ok-wash); }
+.s-fill-bad     { fill: var(--bad); }
+.s-fill-badw    { fill: var(--bad-wash); }
+.s-fill-frost   { fill: var(--frost); }
+.s-fill-frostw  { fill: var(--frost-wash); }
+.s-fill-s2      { fill: var(--surface-2); }
+.s-fill-warnw   { fill: var(--warn-wash); }
+.s-fill-warn    { fill: var(--warn); }
+.s-stroke-rule  { stroke: var(--rule-hard); fill: none; }
+.s-stroke-accent{ stroke: var(--accent); fill: none; }
+.s-stroke-ink   { stroke: var(--ink); fill: none; }
+.s-stroke-muted { stroke: var(--muted); fill: none; }
+.s-stroke-bad   { stroke: var(--bad); fill: none; }
+.s-stroke-frost { stroke: var(--frost); fill: none; }
+.s-t   { font-family: "IBM Plex Sans", sans-serif; font-size: 11px; }
+.s-tm  { font-family: "IBM Plex Mono", monospace; font-size: 10px; }
+.s-tb  { font-family: "IBM Plex Sans", sans-serif; font-size: 11.5px; font-weight: 600; }
+.s-tn  { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600; }
+
+/* ---------------- Filkort ---------------- */
+
+.files { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.file {
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  padding: 14px 16px;
+}
+.file .fn { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--accent); display: block; margin-bottom: 5px; word-break: break-all; }
+.file .fd { font-family: var(--sans); font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+.file .fm { font-family: var(--sans); font-size: 11px; color: var(--muted); margin-top: 7px; }
+
+/* ---------------- Checklista ---------------- */
+
+.checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.check { background: var(--surface); padding: 10px 14px; display: flex; gap: 10px; align-items: flex-start; font-family: var(--sans); font-size: 12.5px; line-height: 1.45; }
+.check .m { color: var(--ok); font-weight: 700; flex: none; font-family: var(--mono); }
+
+footer.end {
+  border-top: 1px solid var(--rule);
+  margin-top: 10px;
+  padding-top: 20px;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--muted);
+  max-width: var(--measure);
+}
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; gap: 0; padding: 0 20px 64px; }
+  nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--rule); padding-bottom: 20px; }
+  nav.toc ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .rule-body { grid-template-columns: 1fr; }
+  .rule-body > div:first-child { border-right: none; border-bottom: 1px solid var(--rule); }
+  .lane-head { grid-template-columns: 1fr; }
+  .lane-head div:last-child { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="shell">
+
+<nav class="toc">
+  <div class="toc-title">Innehåll</div>
+  <ol>
+    <li><a href="#oversikt">Vad lösningen gör</a></li>
+    <li><a href="#kom-igang">Kom igång</a></li>
+    <li><a href="#flode">Dataflödet steg för steg</a></li>
+    <li><a href="#indata">Indata: de fyra källflikarna</a></li>
+    <li><a href="#regler">Regelverket i två spår</a></li>
+    <li><a href="#balans">Ställtid mot leveransprecision</a></li>
+    <li><a href="#kalender">Kalender &amp; kapacitet</a></li>
+    <li><a href="#ruttning">Alternativruttning</a></li>
+    <li><a href="#utdata">Utdata &amp; kolumner</a></li>
+    <li><a href="#validering">Datavalidering</a></li>
+    <li><a href="#antaganden">Antaganden &amp; tolkningar</a></li>
+    <li><a href="#verifiering">Verifiering</a></li>
+    <li><a href="#felsokning">Felsökning</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="masthead">
+  <p class="eyebrow">Jeeves ERP · Finplanering · Instruktion v4</p>
+  <h1>Omplaneringsmotorn Op10</h1>
+  <p class="standfirst">
+    En Python-motor som räknar om starttiderna för Operation&nbsp;10 på hela
+    tillverkningsorderstocken — sekvenserar efter leveransdatum, klustrar artiklar
+    för att slippa ställa om maskinen, respekterar skiftkalendern och flyttar order
+    till alternativmaskin när huvudmaskinen inte hinner. Allt som redan rullar i
+    maskinen lämnas orört, och ingen ställtidsvinst köps med någon annan orders
+    leveransdag.
+  </p>
+  <p class="byline">
+    <span>omplanering_core.py · omplanering_app.py</span>
+    <span>Motorversion v4.0</span>
+    <span>Siffrorna nedan: körning 2026-09-09 10:51</span>
+  </p>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><span class="n">787</span><span class="l">rader i underlaget<br>70 produktionsgrupper</span></div>
+  <div class="kpi is-ok"><span class="n">521&nbsp;→&nbsp;345</span><span class="l">röda order<br>176 färre försenade</span></div>
+  <div class="kpi is-ok"><span class="n">4&nbsp;150&nbsp;→&nbsp;3&nbsp;979</span><span class="l">förseningsdygn totalt<br>−171 dygn</span></div>
+  <div class="kpi is-ok"><span class="n">177</span><span class="l">order gick från<br>Röd till Grön</span></div>
+  <div class="kpi is-accent"><span class="n">820&nbsp;h</span><span class="l">sparad ställtid<br>263 klustrade order</span></div>
+  <div class="kpi is-accent"><span class="n">59</span><span class="l">flyttade till<br>alternativmaskin</span></div>
+  <div class="kpi"><span class="n">112</span><span class="l">frysta rader<br>varav 61 redan igång</span></div>
+</div>
+
+<!-- ============================================================ -->
+<section id="oversikt">
+  <h2><span class="num">01</span>Vad lösningen gör</h2>
+  <p class="deck">
+    Två Python-filer och en arbetsbok in — en tidsstämplad Excel- och CSV-leverans ut.
+  </p>
+
+  <p>
+    Underlaget från Jeeves innehåller varje tillverkningsorders Op10 med en föreslagen
+    starttid och en färg som säger om ordern hinner till kundens leveransdatum. I den
+    körning som siffrorna ovan kommer från var <strong>521 av 787 order röda</strong> —
+    de skulle enligt Jeeves egen plan bli försenade.
+  </p>
+  <p>
+    Motorn bygger om körplanen per maskin från grunden: den lägger order i
+    leveransdatumordning, samlar ihop order på samma artikel så maskinen slipper ställas
+    om mellan dem, räknar tid mot den verkliga skiftkalendern i stället för mot
+    kalenderdygn, och testar alternativmaskiner för de order som ändå inte hinner.
+    Resultatet skrivs tillbaka i mallens format, rad för rad, med en motivering på
+    svenska i klartext för varje order.
+  </p>
+  <p>
+    Den avgörande balansen sitter i klustringen. Att dra fram en order för att slippa en
+    omställning sparar några timmar men kan skjuta en redan försenad order flera dygn
+    bakåt. Motorn väger därför varje sådan framdragning mot vad den kostar i
+    leveransdagar, och avstår när priset är för högt — se
+    <a href="#balans">Ställtid mot leveransprecision</a>.
+  </p>
+
+  <h3>Vad som <em>inte</em> rörs</h3>
+  <p>
+    Det viktigaste i frysningsreglerna: en order vars Op10 redan startat i maskinen
+    kan inte flyttas — den ligger fysiskt i en fixtur. Motorn låser sådana order på deras
+    ursprungliga tid, men räknar in dem som upptagen maskintid när övriga order
+    sekvenseras. Samma sak gäller order med annan operationsstatus än
+    <span class="f">0</span>, order som saknar leveransdatum, och alla operationer som
+    inte är Op10.
+  </p>
+
+  <div class="note">
+    <span class="h">Grundprincip</span>
+    <p>Motorn gissar aldrig. Saknas data eller är den motsägelsefull rapporteras det som en
+    anmärkning — i loggen, i appen och i sammanfattningsfliken — och berörda rader passerar
+    oförändrade i stället för att få påhittade värden.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="kom-igang">
+  <h2><span class="num">02</span>Kom igång</h2>
+  <p class="deck">
+    Appen är det normala sättet att köra. Motorn går även att anropa direkt från
+    terminal eller från en schemaläggare.
+  </p>
+
+  <h3>Via appen</h3>
+  <pre><code>python omplanering_app.py</code></pre>
+  <ol>
+    <li>Fältet <strong>Arbetsbok</strong> fylls i automatiskt med förra körningens fil. Byt med <em>Bläddra…</em>.</li>
+    <li><strong>Utkatalog</strong> föreslås som <span class="f">&lt;arbetsbokens mapp&gt;/output</span>.</li>
+    <li><strong>Klustring</strong> ställer räckviddsfönster och skadebudget. Låt dem stå
+        på 30 respektive 0 om du inte medvetet vill handla ställtid mot leveransdagar —
+        se <a href="#balans">avsnitt 06</a>.</li>
+    <li>Tryck <strong>Kör omplanering</strong>. Beräkningen kör i en bakgrundstråd — fönstret svarar hela tiden.</li>
+    <li>Efter cirka fyra sekunder fylls nyckeltalen och de fyra flikarna: <em>Körlogg</em>, <em>Sammanfattning</em>, <em>Resultat per order</em>, <em>Anmärkningar</em>.</li>
+    <li><em>Öppna Excel</em>, <em>Öppna CSV</em> och <em>Öppna mapp</em> går direkt till leveransfilerna.</li>
+  </ol>
+  <p>
+    På fliken <em>Resultat per order</em> går alla 787 rader att filtrera — röda, gula, gröna,
+    förbättrade, försämrade, omrutade, klustrade, frysta — och att fritextsöka på AoNr,
+    artikelnummer eller produktionsgrupp. Dubbelklick på en rad öppnar hela
+    <span class="f">AI_Kommentar</span> i ett eget fönster.
+  </p>
+
+  <h3>Via terminal</h3>
+  <pre><code>python omplanering_core.py "AI omplanering.xlsx" -o output</code></pre>
+  <p>Samma beräkning, samma filer, loggen går till stdout. Lämplig för schemaläggning.</p>
+
+  <h3>Som bibliotek</h3>
+  <pre><code><span class="k">import</span> omplanering_core <span class="k">as</span> core
+
+res = core.run_replanning(<span class="c">"AI omplanering.xlsx"</span>)
+res.stats[<span class="c">"red_before"</span>], res.stats[<span class="c">"red_after"</span>]   <span class="c"># 521, 345</span>
+res.result        <span class="c"># DataFrame med resultatfliken</span>
+res.warnings      <span class="c"># lista med datavalideringsanmärkningar</span></code></pre>
+
+  <h3>Förutsättningar</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Komponent</th><th>Krav</th><th>Anmärkning</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Python</td><td>3.9 eller senare</td><td><span class="f">zoneinfo</span> krävs för Europe/Stockholm</td></tr>
+      <tr><td class="mono">pandas</td><td>valfri aktuell version</td><td>testad mot 3.0</td></tr>
+      <tr><td class="mono">openpyxl</td><td>3.x</td><td>skriver resultatarbetsboken</td></tr>
+      <tr><td class="mono">tkinter</td><td>ingår i Python för Windows</td><td>endast för appen, inte för motorn</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ -->
+<section id="flode">
+  <h2><span class="num">03</span>Dataflödet steg för steg</h2>
+  <p class="deck">
+    Tio steg, i den ordning instruktionens avsnitt 3 föreskriver. Varje steg är en
+    namngiven funktion i <span class="f">omplanering_core.py</span>.
+  </p>
+
+  <figure>
+    <div class="figframe">
+      <svg viewBox="0 0 900 470" role="img" aria-label="Flödesschema: arbetsbok in, tio beräkningssteg, Excel och CSV ut">
+        <!-- Indata -->
+        <rect x="8" y="26" width="150" height="188" rx="2" class="s-fill-s2"/>
+        <rect x="8" y="26" width="150" height="188" rx="2" class="s-stroke-rule"/>
+        <text x="20" y="45" class="s-tn s-fill-accent">INDATA</text>
+        <text x="20" y="70" class="s-tm s-fill-ink">tblSTGetAoColorCodeLis</text>
+        <text x="20" y="84" class="s-t s-fill-muted">baslinje, färg, leveransdatum</text>
+        <text x="20" y="110" class="s-tm s-fill-ink">tblSTAllOperations…</text>
+        <text x="20" y="124" class="s-t s-fill-muted">tider, ProdGr, status</text>
+        <text x="20" y="150" class="s-tm s-fill-ink">…DateCalenderWorkingTime</text>
+        <text x="20" y="164" class="s-t s-fill-muted">skift per kalendernr</text>
+        <text x="20" y="190" class="s-tm s-fill-ink">…ProductionGroupPrio…</text>
+        <text x="20" y="204" class="s-t s-fill-muted">Prio1–Prio8 per artikel</text>
+
+        <path d="M158 120 H 196" class="s-stroke-muted" stroke-width="1.5"/>
+        <path d="M190 115 l7 5 -7 5 z" class="s-fill-muted"/>
+
+        <!-- Stegkedjan -->
+        <g>
+          <rect x="204" y="26" width="196" height="40" rx="2" class="s-fill-wash"/>
+          <rect x="204" y="26" width="196" height="40" rx="2" class="s-stroke-accent"/>
+          <text x="216" y="43" class="s-tn s-fill-accent">1–2</text>
+          <text x="248" y="43" class="s-tb s-fill-ink">Filtrera &amp; frys</text>
+          <text x="248" y="58" class="s-t s-fill-muted">build_jobs()  ·  normalisera ProdGr</text>
+
+          <rect x="204" y="76" width="196" height="40" rx="2" class="s-fill-surface"/>
+          <rect x="204" y="76" width="196" height="40" rx="2" class="s-stroke-rule"/>
+          <text x="216" y="93" class="s-tn s-fill-accent">3</text>
+          <text x="248" y="93" class="s-tb s-fill-ink">Flaskhalsar</text>
+          <text x="248" y="108" class="s-t s-fill-muted">röda per maskin</text>
+
+          <rect x="204" y="126" width="196" height="40" rx="2" class="s-fill-surface"/>
+          <rect x="204" y="126" width="196" height="40" rx="2" class="s-stroke-rule"/>
+          <text x="216" y="143" class="s-tn s-fill-accent">4–5</text>
+          <text x="248" y="143" class="s-tb s-fill-ink">EDD + klustring</text>
+          <text x="248" y="158" class="s-t s-fill-muted">edd_order() + _pick_next()</text>
+
+          <rect x="204" y="176" width="196" height="40" rx="2" class="s-fill-surface"/>
+          <rect x="204" y="176" width="196" height="40" rx="2" class="s-stroke-rule"/>
+          <text x="216" y="193" class="s-tn s-fill-accent">6</text>
+          <text x="248" y="193" class="s-tb s-fill-ink">Kapacitet</text>
+          <text x="248" y="208" class="s-t s-fill-muted">schedule_machine()</text>
+
+          <rect x="204" y="226" width="196" height="40" rx="2" class="s-fill-surface"/>
+          <rect x="204" y="226" width="196" height="40" rx="2" class="s-stroke-rule"/>
+          <text x="216" y="243" class="s-tn s-fill-accent">7</text>
+          <text x="248" y="243" class="s-tb s-fill-ink">Alternativruttning</text>
+          <text x="248" y="258" class="s-t s-fill-muted">alternative_routing()</text>
+
+          <rect x="204" y="276" width="196" height="40" rx="2" class="s-fill-surface"/>
+          <rect x="204" y="276" width="196" height="40" rx="2" class="s-stroke-rule"/>
+          <text x="216" y="293" class="s-tn s-fill-accent">8</text>
+          <text x="248" y="293" class="s-tb s-fill-ink">Lead-time</text>
+          <text x="248" y="308" class="s-t s-fill-muted">apply_downstream()</text>
+
+          <rect x="204" y="326" width="196" height="40" rx="2" class="s-fill-surface"/>
+          <rect x="204" y="326" width="196" height="40" rx="2" class="s-stroke-rule"/>
+          <text x="216" y="343" class="s-tn s-fill-accent">9</text>
+          <text x="248" y="343" class="s-tb s-fill-ink">Prioritet 100…</text>
+          <text x="248" y="358" class="s-t s-fill-muted">assign_priorities()</text>
+
+          <rect x="204" y="376" width="196" height="40" rx="2" class="s-fill-surface"/>
+          <rect x="204" y="376" width="196" height="40" rx="2" class="s-stroke-rule"/>
+          <text x="216" y="393" class="s-tn s-fill-accent">10</text>
+          <text x="248" y="393" class="s-tb s-fill-ink">AI_Kommentar</text>
+          <text x="248" y="408" class="s-t s-fill-muted">build_comments()</text>
+        </g>
+
+        <!-- Nedåtpilar -->
+        <g class="s-stroke-muted" stroke-width="1.2">
+          <path d="M302 66 V 74"/><path d="M302 116 V 124"/><path d="M302 166 V 174"/>
+          <path d="M302 216 V 224"/><path d="M302 266 V 274"/><path d="M302 316 V 324"/>
+          <path d="M302 366 V 374"/>
+        </g>
+
+        <!-- Återkoppling 7 -> 6 -->
+        <path d="M400 246 H 424 V 196 H 402" class="s-stroke-accent" stroke-width="1.3" stroke-dasharray="4 3"/>
+        <path d="M408 191 l-7 5 7 5 z" class="s-fill-accent"/>
+        <text x="432" y="216" class="s-tm s-fill-accent">räkna om</text>
+        <text x="432" y="228" class="s-tm s-fill-accent">båda maskiner</text>
+
+        <!-- Fryst-block -->
+        <rect x="516" y="26" width="180" height="126" rx="2" class="s-fill-frostw"/>
+        <rect x="516" y="26" width="180" height="126" rx="2" class="s-stroke-frost"/>
+        <text x="530" y="46" class="s-tn s-fill-frost">FRYSTA RADER (112)</text>
+        <text x="530" y="68" class="s-t s-fill-ink">61 redan påbörjade</text>
+        <text x="530" y="86" class="s-t s-fill-ink">27 utan OrdBerLevDat</text>
+        <text x="530" y="104" class="s-t s-fill-ink">18 ej Op10</text>
+        <text x="530" y="122" class="s-t s-fill-ink">6 OpStatus ≠ 0</text>
+        <text x="530" y="142" class="s-tm s-fill-muted">= fast upptagen maskintid</text>
+
+        <path d="M400 46 H 514" class="s-stroke-frost" stroke-width="1.3"/>
+        <path d="M508 41 l7 5 -7 5 z" class="s-fill-frost"/>
+        <path d="M606 152 V 190 H 402" class="s-stroke-frost" stroke-width="1.3" stroke-dasharray="4 3"/>
+        <path d="M408 185 l-7 5 7 5 z" class="s-fill-frost"/>
+
+        <!-- Utdata -->
+        <rect x="516" y="276" width="180" height="140" rx="2" class="s-fill-s2"/>
+        <rect x="516" y="276" width="180" height="140" rx="2" class="s-stroke-rule"/>
+        <text x="530" y="296" class="s-tn s-fill-accent">UTDATA</text>
+        <text x="530" y="318" class="s-tm s-fill-ink">…_resultat_&lt;tid&gt;.xlsx</text>
+        <text x="530" y="332" class="s-t s-fill-muted">4 källflikar oförändrade</text>
+        <text x="530" y="346" class="s-t s-fill-muted">+ resultatflik, radfärgad</text>
+        <text x="530" y="360" class="s-t s-fill-muted">+ AI_Sammanfattning</text>
+        <text x="530" y="384" class="s-tm s-fill-ink">…_resultat_&lt;tid&gt;.csv</text>
+        <text x="530" y="398" class="s-t s-fill-muted">semikolon, för DB-import</text>
+
+        <path d="M400 396 H 514" class="s-stroke-muted" stroke-width="1.5"/>
+        <path d="M508 391 l7 5 -7 5 z" class="s-fill-muted"/>
+
+        <!-- Validering -->
+        <rect x="716" y="26" width="176" height="126" rx="2" class="s-fill-warnw"/>
+        <rect x="716" y="26" width="176" height="126" rx="2" class="s-stroke-rule"/>
+        <text x="730" y="46" class="s-tn s-fill-warn">DATAVALIDERING</text>
+        <text x="730" y="68" class="s-t s-fill-ink">saknade operationsrader</text>
+        <text x="730" y="86" class="s-t s-fill-ink">nolltid → fallback</text>
+        <text x="730" y="104" class="s-t s-fill-ink">kalender saknas / tar slut</text>
+        <text x="730" y="122" class="s-t s-fill-ink">låsta block som krockar</text>
+        <text x="730" y="142" class="s-tm s-fill-muted">rapporteras, gissas aldrig</text>
+
+        <path d="M696 90 H 714" class="s-stroke-muted" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <path d="M804 152 V 240 H 700" class="s-stroke-muted" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <text x="716" y="256" class="s-tm s-fill-muted">till logg, app,</text>
+        <text x="716" y="268" class="s-tm s-fill-muted">sammanfattning</text>
+      </svg>
+    </div>
+    <figcaption>
+      Steg 7 är den enda återkopplingen: när en order flyttas till alternativmaskin
+      schemaläggs både ursprungs- och målmaskin om, så att den frigjorda kapaciteten
+      kommer resterande order till godo.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ -->
+<section id="indata">
+  <h2><span class="num">04</span>Indata: de fyra källflikarna</h2>
+  <p class="deck">
+    Motorn läser fyra flikar och skriver två. Fliknamnen matchas exakt — inklusive
+    stavfelen i Jeeves-exporten.
+  </p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Flik</th><th>Vad den bidrar med</th><th>Auktoritativ för</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">tblSTGetAoColorCodeLis</td>
+        <td>Utgångsläget: en rad per tillverkningsorder med färgstatus, kundens
+            <span class="f">OrdBerLevDat</span> och <span class="f">OrderNr</span>.
+            Datumen ligger som Excel-serienummer.</td>
+        <td>Population, leveransdatum, originalfärg</td>
+      </tr>
+      <tr>
+        <td class="mono">tblSTAllOperationsForAoNr</td>
+        <td>Alla operationer per order med <span class="f">stalltid</span>,
+            <span class="f">stycktid</span>, <span class="f">kalendernr</span> och äkta
+            datetime-stämplar.</td>
+        <td>Operationstider, ProdGr, OpStatus, faktisk starttid</td>
+      </tr>
+      <tr>
+        <td class="mono">tblSTGetDateCalenderWorkingTime</td>
+        <td>Skiftkalender per <span class="f">kalendernr</span>:
+            <span class="f">komtid</span>, <span class="f">gicktid</span>,
+            <span class="f">arbtimperdag</span>.</td>
+        <td>All tidsberäkning</td>
+      </tr>
+      <tr>
+        <td class="mono">tblSTProductionGroupPrioOnItem</td>
+        <td>Tillåtna maskiner per artikel i prioritetsordning
+            <span class="f">Prio1</span>–<span class="f">Prio8</span>.</td>
+        <td>Alternativruttning</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="h">Fliknamnet är avkortat</span>
+    <p>SQL-tabellen heter <span class="f">tblSTGetAoColorCodeList</span> med <em>t</em> på slutet,
+    men Excel-fliken heter <span class="f">tblSTGetAoColorCodeLis</span>. Motorn matchar på
+    fliknamnet. Saknas någon av de fyra avbryts körningen med ett tydligt felmeddelande
+    som listar vilka flikar som faktiskt finns.</p>
+  </div>
+
+  <h3>Kända datafällor och hur de hanteras</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Fälla</th><th>Hantering i koden</th></tr></thead>
+    <tbody>
+      <tr><td>Datum som Excel-serienummer i baslinjen, äkta datetime i operationsfliken</td>
+          <td><span class="f">excel_serial_to_datetime()</span> med epok 1899-12-30. Operationsfliken används i första hand; baslinjen är fallback.</td></tr>
+      <tr><td><span class="f">ProdGr</span> i blandade former: <span class="f">10122</span>, <span class="f">'10122.0'</span></td>
+          <td><span class="f">normalize_prodgr()</span> → strippad heltalssträng före all gruppering.</td></tr>
+      <tr><td><span class="f">stalltid + stycktid = 0</span></td>
+          <td>Fallback i tre led: median per ProdGr → median per kalendernr → global median. Flaggas i <span class="f">AI_Kommentar</span>.</td></tr>
+      <tr><td>Okänd eller tom <span class="f">ColorName</span> (t.ex. <em>Ljusblå</em>)</td>
+          <td>Räknas som Grön vid statusberäkning. Originalfärgen skrivs oförändrad till <span class="f">Orginal_ColorName</span>.</td></tr>
+      <tr><td>Kalender saknas för ett <span class="f">kalendernr</span></td>
+          <td>Tiden räknas kontinuerligt och raden flaggas — inget tyst antagande om skift.</td></tr>
+      <tr><td>Order schemaläggs bortom kalenderns sista dag</td>
+          <td>Slutdatum extrapoleras med kalenderns egen snittkapacitet <em>och</em> märks som extrapolerat i kommentaren.</td></tr>
+      <tr><td>Rad i baslinjen utan motsvarighet i operationsfliken</td>
+          <td>Fryses (operationstid saknas) och räknas i valideringsanmärkningarna.</td></tr>
+      <tr><td>Saknad leveransmarginal som <span class="f">NaN</span></td>
+          <td>Fångas explicit i <span class="f">status_from_margin()</span>. Alla jämförelser mot NaN är falska, så en saknad marginal skulle annars falla igenom till Röd och tyst klassa order utan <span class="f">OrdBerLevDat</span> som försenade.</td></tr>
+      <tr><td>Klustring som skjuter röda order bakåt</td>
+          <td>Räckviddsfönster och skadeprövning enligt <a href="#balans">avsnitt 06</a>. En order med <span class="f">stalltid = 0</span> dras aldrig fram — där finns ingen vinst att hämta.</td></tr>
+      <tr><td>Regelbyte som ser ut som en försämring</td>
+          <td>Utgångsläget bedöms alltid med samma statusgräns som AI-värdena. Jeeves egen <span class="f">ColorName</span> redovisas separat i sammanfattningen.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ -->
+<section id="regler">
+  <h2><span class="num">05</span>Regelverket i två spår</h2>
+  <p class="deck">
+    Varje affärsregel har två läsningar: vad den betyder för den som planerar, och hur
+    den är implementerad. Här står de bredvid varandra. Referensen pekar på avsnittet i
+    instruktion v3.
+  </p>
+
+  <div class="lanes">
+    <div class="lane-head">
+      <div>I verksamheten</div>
+      <div>I koden</div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Redan påbörjad order fryses <span class="ref">§2.1</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>En order vars Op10 redan startat sitter fysiskt i maskinen. Den kan inte
+          flyttas, inte byta maskin och inte ingå i någon omplanering — oavsett vad
+          operationsstatusen säger i systemet.</p>
+          <p>Den försvinner däremot inte: maskinen är upptagen under hela dess körtid,
+          och alla andra order som ska köras där får vänta.</p>
+        </div>
+        <div class="tech">
+          <p><code>aostartdattid &lt;= NOW_Stockholm</code> → <code>movable = False</code>.
+          Jämförelsen görs mot <code>datetime.now(ZoneInfo("Europe/Stockholm"))</code>
+          med tidszonen avskalad, så att sommar-/vintertid hanteras korrekt mot Jeeves
+          naiva tidsstämplar.</p>
+          <p>Raden läggs in i maskinens <code>fixed</code>-lista som ett låst intervall
+          <code>[orig_start, orig_end]</code> innan något rörligt jobb placeras.
+          <code>AI_*</code>-fälten kopieras rakt av från originalet.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Tre ytterligare frysningsskäl <span class="ref">§2.1</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Utöver igångsatta order låses: order där operationen inte längre har status
+          <em>Arbetsorder skapad</em>, order utan kundens leveransdatum (de går inte att
+          statusbedöma), och alla operationer som inte är Op10 — bara Op10 får flyttas.</p>
+        </div>
+        <div class="tech">
+          <p>Kontrollerna körs i fast ordning i <code>build_jobs()</code>: saknad
+          operationsrad → <code>OpNr != 10</code> → redan påbörjad →
+          <code>OpStatus != 0</code> → saknat <code>OrdBerLevDat</code>. Skälet sparas i
+          <code>frozen_reason</code> och blir till kommentarstexten.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Leveransdatum styr ordningen (EDD) <span class="ref">§3.4</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Order på samma maskin körs i den ordning kunderna ska ha dem. Krockar två
+          order om samma maskin vinner den med tidigast <span class="f">OrdBerLevDat</span>.</p>
+        </div>
+        <div class="tech">
+          <p><code>edd_order()</code> sorterar de rörliga jobben per ProdGr på
+          <code>OrdBerLevDat</code>, med <code>AoNr</code> som tie-break. Ordningen
+          bryts bara av en godkänd klustring — se nästa regel.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Artikel-klustring tar bort ställtid <span class="ref">§2.3</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Kör maskinen redan artikel 21135 är det slöseri att ställa om till något
+          annat och sedan tillbaka. Motorn samlar order på samma artikel i en obruten
+          följd — bara den första i följden betalar ställtiden.</p>
+          <p>Men klustringen får aldrig gå före leveransprecisionen: en order dras bara
+          fram om den ryms i räckviddsfönstret <em>och</em> inte kostar någon annan order
+          en leveransdag. Se <a href="#balans">Ställtid mot leveransprecision</a>.</p>
+          <p>I körningen ovan gav det <strong>820 sparade ställtidstimmar</strong> över
+          263 order, varav 46 behövde dras fram förbi leveransdatumordningen.</p>
+        </div>
+        <div class="tech">
+          <p>Klustringen är ett beslut per position, inte en försortering.
+          <code>_pick_next()</code> väljer mellan EDD-vinnaren och ett jobb med samma
+          <code>ArtNr</code> som det nyss körda; det senare kräver godkänd räckvidd (N2)
+          och skadeprövning (N3).</p>
+          <p>Skadan mäts genom att projicera hela den kvarvarande kön två gånger — med
+          och utan framdragningen — och jämföra summan av förseningsdygn.
+          <code>WorkCalendar.project()</code> gör det i ett svep över kalenderfönstren.</p>
+          <p>Vid placering letar <code>schedule_machine()</code> upp det intervall som
+          slutar närmast före jobbets start. Är dess <code>ArtNr</code> densamma sätts
+          <code>setup_saved = stalltid</code> och sluttiden räknas om.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Ställtidskedja mot fryst order <span class="ref">§2.3 (ny i v3)</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Kör maskinen just nu en igångsatt order på artikel X, och nästa order i kön
+          också är artikel X, är maskinen redan omställd. Då slipper även den ordern
+          ställtiden — trots att den igångsatta ordern själv inte får flyttas.</p>
+        </div>
+        <div class="tech">
+          <p>Föregångarsökningen skiljer inte på frysta och rörliga intervall, så regeln
+          faller ut automatiskt. Den frysta ordern blir <em>enbart</em> ställtidsreferens:
+          den startar inget kluster och deltar inte i klustersorteringen.</p>
+          <p>Kommentaren markerar fallet med <em>(redan påbörjad order)</em>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">En maskin kör en sak i taget <span class="ref">§2.2</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Tar order A fyra timmar från 08:00 kan order B tidigast börja 12:00. Hinner
+          inte operationen bli klar innan skiftet slutar fortsätter den vid nästa
+          skiftstart.</p>
+        </div>
+        <div class="tech">
+          <p>Jobben placeras sekventiellt från <code>NOW</code>. Överlappar ett tänkt
+          intervall ett låst block flyttas markören till blockets slut och placeringen
+          görs om — därför kan ett kort jobb hamna före ett låst block, medan ett långt
+          skjuts förbi det.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Efterföljande operationer följer med <span class="ref">§2.1, §3.8</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Op20, Op30 och framåt planeras inte om. Deras sammanlagda ledtid behandlas
+          som en fast buffert: flyttas Op10 två dagar tidigare blir hela ordern klar två
+          dagar tidigare.</p>
+        </div>
+        <div class="tech">
+          <p><code>downstream_delta = TiSlutDat − aoslutdattid</code> beräknas ur
+          originaldata per order och läggs på den nya Op10-sluttiden.
+          Verifierat exakt bevarad — största avvikelse 0 sekunder över alla 684
+          omplanerade rader.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Grön, Gul eller Röd <span class="ref">§2.4</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Statusen sitter i <strong>leveransmarginalen</strong> — hur många hela dygn
+          det är mellan orderns klartid och kundens leveransdatum.</p>
+          <p><span class="pill ok">Grön</span> mer än ett dygns marginal ·
+             <span class="pill warn">Gul</span> exakt ett dygn ·
+             <span class="pill bad">Röd</span> mindre än ett dygn.</p>
+          <p>En order som blir klar precis på leveransdagen räknas alltså som Röd — det
+          finns ingen buffert kvar om något går fel i sista operationen.</p>
+        </div>
+        <div class="tech">
+          <p><code>marginal = OrdBerLevDat − AI_TiSlutDat</code>, i hela dygn på
+          datumnivå. Gränsen sitter i <code>GREEN_MARGIN_DAYS</code> (förval 1):
+          <code>&gt;</code> ger Grön, <code>==</code> ger Gul, <code>&lt;</code> ger Röd.</p>
+          <p><code>status_from_margin()</code> fångar <code>NaN</code> explicit — alla
+          jämförelser mot NaN är falska, så en saknad marginal skulle annars falla
+          igenom till Röd och tyst klassa order utan leveransdatum som försenade.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Jämför alltid med samma regel <span class="ref">§2.4, §5</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Jeeves egen färgsättning använder en annan gräns än den ovan. Bedöms
+          utgångsläget med Jeeves färger och utfallet med AI:s regel, ser ett rent
+          regelbyte ut som en försämring.</p>
+          <p>Sammanfattningen visar därför utgångsläget bedömt med <em>samma</em> gräns
+          som AI-värdena, och Jeeves egen färg separat under sin egen rubrik.</p>
+        </div>
+        <div class="tech">
+          <p><code>Job.baseline_status_rule</code> kör samma
+          <code>status_from_margin()</code> på <code>Orginal_TiSlutDat</code>. All
+          före/efter-statistik och alla övergångar använder den.</p>
+          <p><code>Orginal_ColorName</code> i resultatfliken lämnas orörd — den är
+          Jeeves råa värde och ska kunna stämmas av mot källsystemet.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <div class="rule-title">Prioritet 100 = körs först <span class="ref">§2.4, §3.9</span></div>
+      <div class="rule-body">
+        <div class="biz">
+          <p>Varje maskin får sin egen kölista. Den order som startar först får 100, nästa
+          99, och så vidare. Talen är unika per maskin och ska läsas som rangordning —
+          inte jämföras med Jeeves originalprioritet, som är en annan skala.</p>
+        </div>
+        <div class="tech">
+          <p>Tilldelas <em>efter</em> klustring och ruttning, sorterat på faktisk
+          <code>AI_AoStartDatTid</code>. Frysta order tävlar på samma villkor utifrån sin
+          oförändrade starttid. Sekundärnyckeln är sluttid, vilket gör ordningen entydig
+          även för jobb vars hela varaktighet klustrats bort.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="balans">
+  <h2><span class="num">06</span>Ställtid mot leveransprecision</h2>
+  <p class="deck">
+    Den avvägning som avgör om planen blir bättre eller sämre — och varför obegränsad
+    klustring gjorde den sämre.
+  </p>
+
+  <h3>Vad en framdragning faktiskt kostar</h3>
+  <p>
+    Att dra fram en order förbi leveransdatumordningen för att slippa ställa om maskinen
+    är ett byte med två sidor, och de är inte jämnstora:
+  </p>
+  <ul>
+    <li><strong>Vinsten</strong> är exakt orderns <span class="f">stalltid</span>. Inget annat.</li>
+    <li><strong>Priset</strong> är orderns <span class="f">stycktid</span> i försening för
+        <em>varje</em> order den hoppar över.</li>
+  </ul>
+  <p>
+    I detta underlag är den genomsnittliga besparingen omkring <strong>3&nbsp;h</strong> medan
+    en Op10 i snitt är <strong>83&nbsp;h</strong> lång. Bytet lönar sig alltså bara när de
+    överhoppade ordrarna har minst 80 timmars marginal kvar — och en order som redan är röd
+    har per definition ingen marginal alls.
+  </p>
+
+  <figure>
+    <div class="figframe">
+      <svg viewBox="0 0 860 232" role="img" aria-label="Två körordningar jämförda: klustrad ordning försenar B1 med A2:s hela körtid">
+        <text x="14" y="22" class="s-tn s-fill-muted">TRE ORDER PÅ SAMMA MASKIN</text>
+        <text x="14" y="42" class="s-t s-fill-ink">A1 · artikel A · levereras 15 sep</text>
+        <text x="240" y="42" class="s-t s-fill-ink">A2 · artikel A · levereras 20 jan</text>
+        <text x="520" y="42" class="s-t s-fill-bad">B1 · artikel B · levereras 20 sep, redan röd</text>
+
+        <!-- Klustrad ordning -->
+        <text x="14" y="82" class="s-tn s-fill-bad">KLUSTRAD ORDNING</text>
+        <rect x="150" y="66" width="70" height="26" class="s-fill-s2"/>
+        <rect x="150" y="66" width="70" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="168" y="83" class="s-tm s-fill-ink">ställ A</text>
+        <rect x="220" y="66" width="120" height="26" class="s-fill-okw"/>
+        <rect x="220" y="66" width="120" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="268" y="83" class="s-tm s-fill-ok">A1</text>
+        <rect x="340" y="66" width="160" height="26" class="s-fill-warnw"/>
+        <rect x="340" y="66" width="160" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="404" y="83" class="s-tm s-fill-warn">A2  (due jan)</text>
+        <rect x="500" y="66" width="70" height="26" class="s-fill-s2"/>
+        <rect x="500" y="66" width="70" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="518" y="83" class="s-tm s-fill-ink">ställ B</text>
+        <rect x="570" y="66" width="130" height="26" class="s-fill-badw"/>
+        <rect x="570" y="66" width="130" height="26" class="s-stroke-bad" stroke-width="1.3"/>
+        <text x="626" y="83" class="s-tm s-fill-bad">B1</text>
+        <text x="710" y="83" class="s-tm s-fill-bad">B1 klar sist</text>
+
+        <!-- EDD-ordning -->
+        <text x="14" y="142" class="s-tn s-fill-ok">EDD-ORDNING</text>
+        <rect x="150" y="126" width="70" height="26" class="s-fill-s2"/>
+        <rect x="150" y="126" width="70" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="168" y="143" class="s-tm s-fill-ink">ställ A</text>
+        <rect x="220" y="126" width="120" height="26" class="s-fill-okw"/>
+        <rect x="220" y="126" width="120" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="268" y="143" class="s-tm s-fill-ok">A1</text>
+        <rect x="340" y="126" width="70" height="26" class="s-fill-s2"/>
+        <rect x="340" y="126" width="70" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="358" y="143" class="s-tm s-fill-ink">ställ B</text>
+        <rect x="410" y="126" width="130" height="26" class="s-fill-okw"/>
+        <rect x="410" y="126" width="130" height="26" class="s-stroke-ok" stroke-width="1.3"/>
+        <text x="466" y="143" class="s-tm s-fill-ok">B1</text>
+        <rect x="540" y="126" width="70" height="26" class="s-fill-s2"/>
+        <rect x="540" y="126" width="70" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="552" y="143" class="s-tm s-fill-ink">ställ A igen</text>
+        <rect x="610" y="126" width="160" height="26" class="s-fill-warnw"/>
+        <rect x="610" y="126" width="160" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="674" y="143" class="s-tm s-fill-warn">A2</text>
+
+        <!-- Skillnaden -->
+        <path d="M410 108 H 568" class="s-stroke-bad" stroke-width="1.3" stroke-dasharray="4 3"/>
+        <path d="M562 103 l7 5 -7 5 z" class="s-fill-bad"/>
+        <text x="418" y="104" class="s-tm s-fill-bad">B1 försenas med A2:s hela stycktid</text>
+
+        <text x="14" y="186" class="s-t s-fill-ink">Vinst av klustring: en omställning till artikel A sparas (~3 h).</text>
+        <text x="14" y="204" class="s-t s-fill-ink">Pris: B1 – som redan är röd – skjuts bakåt med A2:s körtid (~80 h).</text>
+        <text x="14" y="222" class="s-t s-fill-muted">Spärrarna nedan släpper igenom klustringen bara när priset är noll.</text>
+      </svg>
+    </div>
+    <figcaption>
+      Klustring flyttar aldrig arbete bort från maskinen — den flyttar det bara framför
+      någon annan. Är den andra ordern redan försenad blir bytet rent negativt.
+    </figcaption>
+  </figure>
+
+  <h3>Två spärrar</h3>
+  <p>
+    Klustringen är därför inte en försortering utan ett beslut vid varje position i
+    sekvensen. Nästa jobb är antingen EDD-vinnaren, eller ett jobb med samma artikel som
+    det nyss körda — och det senare måste passera båda spärrarna:
+  </p>
+  <div class="tw"><table>
+    <thead><tr><th>Spärr</th><th>Regel</th><th>Förval</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Räckvidd</strong></td>
+        <td>Orderns <span class="f">OrdBerLevDat</span> får ligga högst N dygn efter
+            leveransdatumet för den order som annars körts nu. Långa artikelserier delas
+            i flera kluster i stället för att dras ihop till ett.</td>
+        <td class="mono">30 dygn</td>
+      </tr>
+      <tr>
+        <td><strong>Skadeprövning</strong></td>
+        <td>Godkänn bara om <span class="f">tillkommande förseningsdygn ≤ budget ×
+            sparad&nbsp;stalltid</span>. Förseningen mäts över <em>alla</em> kvarvarande
+            order på maskinen — både de som förlorar och de som vinner på flytten.</td>
+        <td class="mono">0</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p>
+    Budgeten är en enda ratt med affärsbetydelse: <em>hur många förseningsdygn får en
+    sparad ställtidstimme kosta?</em> Förvalet <span class="f">0</span> betyder att ingen
+    order får bli senare för ställtidens skull. Båda värdena går att ändra i appens
+    <em>Klustring</em>-rad utan att röra koden.
+  </p>
+  <p>
+    En följd av skadeprövningen är att en order med <span class="f">stalltid = 0</span>
+    aldrig dras fram — där finns ingenting att spara, bara skada. Klustring som uppstår
+    av sig själv i EDD-ordningen prövas inte alls, eftersom den är gratis.
+  </p>
+
+  <h3>Vad spärrarna är värda</h3>
+  <p>
+    Samma underlag, samma fryslinje, bara policyn ändrad:
+  </p>
+  <div class="tw"><table>
+    <thead><tr><th>Policy</th><th class="num">Röda efter</th><th class="num">Förseningsdygn</th><th class="num">Order som blev värre</th><th class="num">Sparad ställtid</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Alltid klustra <span class="pill neut">tidigare beteende</span></td>
+        <td class="num">353</td>
+        <td class="num">4&nbsp;150 → <strong>5&nbsp;072</strong></td>
+        <td class="num">145</td>
+        <td class="num">1&nbsp;099 h</td>
+      </tr>
+      <tr>
+        <td>Ren EDD, ingen framdragning</td>
+        <td class="num">343</td>
+        <td class="num">4&nbsp;150 → 4&nbsp;065</td>
+        <td class="num">109</td>
+        <td class="num">745 h</td>
+      </tr>
+      <tr>
+        <td><strong>30 dygn / budget 0</strong> <span class="pill ok">förval</span></td>
+        <td class="num">344</td>
+        <td class="num">4&nbsp;150 → <strong>3&nbsp;955</strong></td>
+        <td class="num">110</td>
+        <td class="num">826 h</td>
+      </tr>
+      <tr>
+        <td>30 dygn / budget 0,25</td>
+        <td class="num">339</td>
+        <td class="num">4&nbsp;150 → 4&nbsp;012</td>
+        <td class="num">117</td>
+        <td class="num">813 h</td>
+      </tr>
+      <tr>
+        <td>30 dygn / budget 1,0</td>
+        <td class="num">336</td>
+        <td class="num">4&nbsp;150 → 4&nbsp;067</td>
+        <td class="num">115</td>
+        <td class="num">872 h</td>
+      </tr>
+      <tr>
+        <td>14 dygn / budget 0</td>
+        <td class="num">339</td>
+        <td class="num">4&nbsp;150 → 3&nbsp;995</td>
+        <td class="num">110</td>
+        <td class="num">794 h</td>
+      </tr>
+      <tr>
+        <td>60 dygn / budget 0</td>
+        <td class="num">349</td>
+        <td class="num">4&nbsp;150 → 3&nbsp;973</td>
+        <td class="num">110</td>
+        <td class="num">853 h</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note stop">
+    <span class="h">Obegränsad klustring gjorde planen sämre</span>
+    <p>Det tidigare beteendet — klustra alltid, oavsett kostnad — landade på
+    <strong>5&nbsp;072 förseningsdygn mot Jeeves ursprungsplans 4&nbsp;150</strong>. Den
+    sparade 1&nbsp;099 ställtidstimmar, men betalade för dem med nästan tusen extra
+    förseningsdygn. Antalet röda order dolde det: 353 mot 344 ser ut som en liten
+    skillnad, men djupet i förseningarna gick åt fel håll.</p>
+  </div>
+
+  <div class="note">
+    <span class="h">Spärrarna slår båda ytterligheterna</span>
+    <p>Förvalet ger <em>både</em> lägre total försening än ren EDD (3&nbsp;955 mot
+    4&nbsp;065) <em>och</em> mer sparad ställtid (826&nbsp;h mot 745&nbsp;h). Klustring
+    som inte kostar någon en leveransdag frigör ändå maskintid, och den kommer alla
+    order på maskinen till godo. Balansen är alltså inte en kompromiss mellan två
+    mål — den är bättre än båda extremerna på båda måtten.</p>
+  </div>
+
+  <p>
+    Att höja budgeten över noll sänker antalet röda något (344&nbsp;→&nbsp;336) men höjer
+    den totala förseningen. Det är en reell avvägning: mer klustring frigör kapacitet som
+    räddar enstaka order över mållinjen, samtidigt som fler order skjuts djupare in i
+    förseningen. Vilket som väger tyngst är ett verksamhetsbeslut, inte ett tekniskt.
+  </p>
+  <p class="deck" style="border:0;padding:0;margin-top:18px">
+    Siffrorna kommer från en kontrollerad jämförelse med fryslinjen låst till
+    2026-09-09 10:00, så att bara policyn skiljer körningarna åt.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="kalender">
+  <h2><span class="num">07</span>Kalender &amp; kapacitet</h2>
+  <p class="deck">
+    Den del av motorn som gör mest skillnad mot en naiv beräkning: timmar konsumeras
+    bara när maskinen faktiskt är bemannad.
+  </p>
+
+  <p>
+    För varje <span class="f">kalendernr</span> och kalenderdag byggs ett arbetsfönster.
+    Startpunkten är <span class="f">komtid</span>, och fönstret sträcker sig så långt som
+    dagens <span class="f">arbtimperdag</span> räcker — dock aldrig förbi
+    <span class="f">gicktid</span>. Dagar som saknas i kalendern är stillestånd:
+    helger och röda dagar behöver inte modelleras separat, de finns helt enkelt inte i
+    tabellen.
+  </p>
+
+  <div class="tw"><table>
+    <thead><tr><th class="mono">kalendernr</th><th>komtid–gicktid</th><th>arbtimperdag</th><th>Innebörd</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">2</td><td class="mono">00:00–23:59</td><td class="mono">4,5 / 8 / 24</td><td>Kontinuerlig drift, kortare fredag och söndag, lördag stängt</td></tr>
+      <tr><td class="mono">6</td><td class="mono">00:00–23:59</td><td class="mono">16 / 24</td><td>Kontinuerlig drift</td></tr>
+      <tr><td class="mono">7</td><td class="mono">06:00–14:15</td><td class="mono">8,25</td><td>Enskift, måndag–fredag</td></tr>
+      <tr><td class="mono">90</td><td class="mono">06:00–14:15</td><td class="mono">8,00</td><td>Enskift med rast</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>
+    <strong>Innevarande dygn är ett specialfall.</strong> Kolumnen
+    <span class="f">arbtimperdag_firstdaymode</span> anger hur många timmar som återstår
+    idag. Motorn använder den i stället för <span class="f">arbtimperdag</span> för dagens
+    datum, och låter fönstret börja tidigast <span class="f">NOW_Stockholm</span> — startar
+    körningen kl. 15:41 finns 8,5 timmar kvar på ett dygnsskift, och noll på ett skift som
+    slutade 14:15.
+  </p>
+
+  <figure>
+    <div class="figframe">
+      <svg viewBox="0 0 900 260" role="img" aria-label="Tidslinje som visar hur ett jobb konsumerar arbetstimmar över tre skift och hoppar över ett låst block">
+        <!-- tidsaxel -->
+        <line x1="60" y1="196" x2="866" y2="196" class="s-stroke-rule" stroke-width="1"/>
+
+        <!-- dagsetiketter -->
+        <g class="s-tm s-fill-muted">
+          <text x="76" y="216">tis 08/9</text>
+          <text x="256" y="216">ons 09/9</text>
+          <text x="436" y="216">tor 10/9</text>
+          <text x="616" y="216">fre 11/9</text>
+          <text x="782" y="216">lör 12/9</text>
+        </g>
+        <g class="s-stroke-rule" stroke-width="1" stroke-dasharray="2 4">
+          <line x1="240" y1="52" x2="240" y2="196"/>
+          <line x1="420" y1="52" x2="420" y2="196"/>
+          <line x1="600" y1="52" x2="600" y2="196"/>
+          <line x1="760" y1="52" x2="760" y2="196"/>
+        </g>
+
+        <!-- arbetsfönster -->
+        <text x="60" y="44" class="s-tn s-fill-accent">ARBETSFÖNSTER  (kalendernr 2)</text>
+        <rect x="150" y="56" width="90" height="22" class="s-fill-wash"/>
+        <rect x="150" y="56" width="90" height="22" class="s-stroke-accent" stroke-width="1"/>
+        <rect x="240" y="56" width="180" height="22" class="s-fill-wash"/>
+        <rect x="240" y="56" width="180" height="22" class="s-stroke-accent" stroke-width="1"/>
+        <rect x="420" y="56" width="180" height="22" class="s-fill-wash"/>
+        <rect x="420" y="56" width="180" height="22" class="s-stroke-accent" stroke-width="1"/>
+        <rect x="600" y="56" width="60" height="22" class="s-fill-wash"/>
+        <rect x="600" y="56" width="60" height="22" class="s-stroke-accent" stroke-width="1"/>
+
+        <text x="156" y="71" class="s-tm s-fill-accent">8,5 h kvar</text>
+        <text x="300" y="71" class="s-tm s-fill-accent">24 h</text>
+        <text x="480" y="71" class="s-tm s-fill-accent">24 h</text>
+        <text x="606" y="71" class="s-tm s-fill-accent">8 h</text>
+        <text x="676" y="71" class="s-tm s-fill-muted">stängt →</text>
+        <text x="770" y="71" class="s-tm s-fill-muted">stängt</text>
+
+        <!-- låst block -->
+        <text x="60" y="108" class="s-tn s-fill-frost">LÅST BLOCK</text>
+        <rect x="284" y="120" width="106" height="26" class="s-fill-frostw"/>
+        <rect x="284" y="120" width="106" height="26" class="s-stroke-frost" stroke-width="1.2"/>
+        <text x="292" y="137" class="s-tm s-fill-frost">AO#91101 igång</text>
+
+        <!-- jobbet -->
+        <text x="60" y="176" class="s-tn s-fill-ok">JOBB: 30 h</text>
+        <rect x="150" y="158" width="90" height="26" class="s-fill-okw"/>
+        <rect x="150" y="158" width="90" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="176" y="175" class="s-tm s-fill-ok">8,5 h</text>
+
+        <rect x="240" y="158" width="44" height="26" class="s-fill-okw"/>
+        <rect x="240" y="158" width="44" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="250" y="175" class="s-tm s-fill-ok">6 h</text>
+
+        <rect x="390" y="158" width="30" height="26" class="s-fill-okw"/>
+        <rect x="390" y="158" width="30" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="395" y="175" class="s-tm s-fill-ok">4 h</text>
+
+        <rect x="420" y="158" width="86" height="26" class="s-fill-okw"/>
+        <rect x="420" y="158" width="86" height="26" class="s-stroke-rule" stroke-width="1"/>
+        <text x="446" y="175" class="s-tm s-fill-ok">11,5 h</text>
+
+        <!-- pilar för hopp -->
+        <path d="M284 171 H 388" class="s-stroke-frost" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <path d="M382 166 l7 5 -7 5 z" class="s-fill-frost"/>
+        <text x="300" y="200" class="s-tm s-fill-frost">väntar ut det låsta blocket</text>
+
+        <!-- klarmarkering -->
+        <line x1="506" y1="150" x2="506" y2="192" class="s-stroke-ok" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="506" cy="150" r="3.5" class="s-fill-ok"/>
+        <text x="514" y="148" class="s-tb s-fill-ok">klart</text>
+
+        <text x="60" y="240" class="s-t s-fill-muted">Endast timmar inuti ett arbetsfönster räknas. Stillestånd, skiftslut och låsta block förlänger genomloppstiden men konsumerar ingen kapacitet.</text>
+      </svg>
+    </div>
+    <figcaption>
+      Ett 30-timmarsjobb som startar en tisdag eftermiddag. Åtta och en halv timme ryms
+      idag, resten fördelas över kommande skift — och det låsta blocket mitt i onsdagen
+      skjuter jobbet framåt utan att förbruka någon arbetstid.
+    </figcaption>
+  </figure>
+
+  <h3>Placeringsloopen</h3>
+  <pre><code>remaining = edd_order(machine.movable)
+
+<span class="k">while</span> remaining:
+    job, kostnad = _pick_next(...)   <span class="c"># EDD-vinnaren, eller godkänd klustring</span>
+    remaining.remove(job)
+    duration = job.stalltid + job.stycktid
+    <span class="k">while</span> <span class="k">True</span>:
+        start, end = cal.schedule(kalendernr, cursor, duration)   <span class="c"># hoppar över stillestånd</span>
+        clash = machine.conflict(start, end)                      <span class="c"># krockar med låst block?</span>
+        <span class="k">if</span> clash <span class="k">is</span> <span class="k">None</span>: <span class="k">break</span>
+        cursor = clash.end                                        <span class="c"># vänta ut blocket, försök igen</span>
+
+    pred = senast avslutade intervall före start                  <span class="c"># fryst eller rörligt</span>
+    <span class="k">if</span> pred.ArtNr == job.ArtNr:
+        job.setup_saved = job.stalltid
+        start, end = cal.schedule(kalendernr, start, job.stycktid) <span class="c"># samma start, kortare jobb</span>
+
+    committed.append((start, end, job))
+    cursor = end</code></pre>
+</section>
+
+<!-- ============================================================ -->
+<section id="ruttning">
+  <h2><span class="num">08</span>Alternativruttning</h2>
+  <p class="deck">
+    När huvudmaskinen inte hinner: flytta ordern dit den blir grön — men aldrig på
+    bekostnad av någon annan.
+  </p>
+
+  <p>
+    Efter EDD och klustring återstod <strong>370 röda order</strong>. För var och en av
+    dem, i leveransdatumordning, letar motorn igenom artikelns
+    <span class="f">Prio1</span>–<span class="f">Prio8</span> efter en maskin där ordern
+    lämnar rött. Av dessa lyckades <strong>59 flyttas</strong>.
+  </p>
+
+  <p>Varje kandidatflytt provas skarpt och rullas tillbaka om den inte håller:</p>
+  <ol>
+    <li>Ordern lyfts ur ursprungsmaskinens kö och läggs in i målmaskinens.</li>
+    <li>Målmaskinen schemaläggs om i sin helhet — EDD, klustring och kapacitet.</li>
+    <li>Lämnar ordern rött (blir Grön eller Gul) <em>och</em> ingen order på målmaskinen
+        som inte redan var röd blir röd, genomförs flytten.</li>
+    <li>Ursprungsmaskinen schemaläggs om, så att den frigjorda kapaciteten kommer
+        resterande order där till godo.</li>
+    <li>Håller villkoret inte återställs båda maskinerna exakt som de var, och nästa
+        prioritet i listan provas.</li>
+  </ol>
+
+  <div class="note">
+    <span class="h">Skyddsregeln</span>
+    <p>Villkoret <em>”ingen order som inte redan var röd får bli röd”</em> är ett medvetet
+    tillägg utöver instruktionen. Utan det kan en flytt lösa en försening genom att skapa
+    en annan. Det gör ruttningen försiktigare, men aldrig kontraproduktiv.</p>
+  </div>
+
+  <p>
+    Hela svepet upprepas i upp till fyra pass, eftersom en genomförd flytt frigör
+    kapacitet som kan göra nästa flytt onödig eller möjlig. Passen avbryts så fort ett
+    pass inte längre gör någon flytt. Målmaskinens kalender styr tidsberäkningen efter
+    flytten — flyttas en order från en enskiftsmaskin till en dygnsmaskin räknas den om
+    mot dygnskalendern.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="utdata">
+  <h2><span class="num">09</span>Utdata &amp; kolumner</h2>
+  <p class="deck">
+    En Excel-fil och en CSV per körning, båda tidsstämplade så att inget skrivs över.
+  </p>
+
+  <div class="files">
+    <div class="file">
+      <span class="fn">&lt;filnamn&gt;_resultat_&lt;yyyyMMddHHmmss&gt;.xlsx</span>
+      <div class="fd">Sex flikar: de fyra källflikarna med oförändrat innehåll, plus
+      <span class="f">tblAIAnglysisGetAoColorCodeList</span> och
+      <span class="f">AI_Sammanfattning</span>.</div>
+      <div class="fm">Radfärgning per AI-status · frysta rubriker · autofilter · datumformat yyyy-mm-dd hh:mm</div>
+    </div>
+    <div class="file">
+      <span class="fn">&lt;filnamn&gt;_resultat_&lt;yyyyMMddHHmmss&gt;.csv</span>
+      <div class="fd">Resultattabellen semikolonavgränsad för databasimport. UTF-8 med
+      BOM, CRLF, datum som <span class="f">yyyy-MM-dd HH:mm:ss</span>.</div>
+      <div class="fm">Samma kolumner och radordning som Excel-fliken</div>
+    </div>
+  </div>
+
+  <h3>Kolumner i resultatfliken</h3>
+  <p>
+    Kolumn 1–20 följer mallens exakta ordning. Nyckelkolumner och
+    <span class="f">Orginal_</span>-kolumner kommer orörda från källdatat;
+    <span class="f">AI_</span>-kolumnerna är motorns förslag.
+  </p>
+
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Kolumn</th><th>Källa</th><th>Innehåll</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1–5</td><td class="mono">AoNr, AoPos, OpNr, ProdGr, ArtNr</td><td><span class="pill neut">Original</span></td><td>Nyckel och ursprunglig maskin</td></tr>
+      <tr><td class="num">6</td><td class="mono">AI_ProdGr</td><td><span class="pill ok">AI</span></td><td>Maskin efter eventuell ruttning</td></tr>
+      <tr><td class="num">7–9</td><td class="mono">Orginal_AoStartDatTid<br>Orginal_AoSlutDatTid<br>Orginal_TiSlutDat</td><td><span class="pill neut">Original</span></td><td>Jeeves ursprungliga tider</td></tr>
+      <tr><td class="num">10–12</td><td class="mono">Orginal_ColorCode<br>Orginal_ColorName<br>Orginal_OpkoPrioritet</td><td><span class="pill neut">Original</span></td><td>Utgångsstatus och Jeeves-prioritet</td></tr>
+      <tr><td class="num">13–15</td><td class="mono">AI_AoStartDatTid<br>AI_AoSlutDatTid<br>AI_TiSlutDat</td><td><span class="pill ok">AI</span></td><td>Ny Op10-tid och ny orderklartid</td></tr>
+      <tr><td class="num">16–17</td><td class="mono">AI_ColorCode<br>AI_ColorName</td><td><span class="pill ok">AI</span></td><td>Grön eller Röd mot <span class="f">OrdBerLevDat</span></td></tr>
+      <tr><td class="num">18</td><td class="mono">AI_OpkoPrioritet</td><td><span class="pill ok">AI</span></td><td>100 = körs först, unik per <span class="f">AI_ProdGr</span></td></tr>
+      <tr><td class="num">19</td><td class="mono">AI_LogCreatDateTime</td><td><span class="pill ok">AI</span></td><td>Körningens tidsstämpel</td></tr>
+      <tr><td class="num">20</td><td class="mono">AI_Kommentar</td><td><span class="pill ok">AI</span></td><td>Motivering i klartext, se nedan</td></tr>
+      <tr><td class="num">21</td><td class="mono">Orginal_OrdBerLevDat</td><td><span class="pill warn">Tillägg</span></td><td>Kundens leveransdatum — se <a href="#antaganden">antaganden</a></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>AI_Kommentar</h3>
+  <p>
+    Varje rad får en kommentar som gör utfallet granskningsbart utan att man behöver
+    öppna koden: identitet, frysningsstatus, föregångare och efterföljare på maskinen,
+    sparad ställtid och mot vilken order, om ordern dragits fram och vad det kostade,
+    statusändring, eventuellt maskinbyte, samt de nya tiderna och leveransmarginalen.
+  </p>
+
+  <h4>Omplanerad order som dragits fram för klustring</h4>
+  <pre><code>AO#90843 (Order: 202997): Status oförändrad: Grön. Ställtid sparad 4,71 h
+(artikel-klustring på 20261 mot AO#90295). Framdragen förbi leveransdatum-
+ordningen för klustringen – utan att någon order tappar en leveransdag.
+Körs efter AO#90295/Order:204908 på 1242 (väntar på avslut 2026-09-28 16:20).
+Påverkar start för AO#90572/Order:211044 (väntar på avslut).
+Ny Op10: 2026-09-28 16:20–2026-10-07 08:49 (148,87 h), AI_TiSlutDat …
+mot OrdBerLevDat … Marginal +33 dygn → Grön.</code></pre>
+
+  <h4>Fryst order som redan är igång</h4>
+  <pre><code>AO#91101 (Order: 211048): Redan påbörjad (start 2026-09-08 00:00) – ej
+omplanerad, ligger fast enligt ursprungligt schema på 1210. Nästa i
+maskinsekvensen: AO#90675/Order:90632 (start 2026-09-09 07:00).
+Status oförändrad: Grön.</code></pre>
+
+  <p>
+    Raden <em>Framdragen förbi leveransdatumordningen</em> visas bara när klustringen
+    faktiskt bröt EDD, och redovisar alltid skadeprövningens utfall. Slutraden
+    <em>Marginal ±N dygn → status</em> gör att Grön/Gul/Röd går att härleda direkt ur
+    kommentaren utan att räkna själv.
+  </p>
+
+  <h3>AI_Sammanfattning</h3>
+  <p>
+    Mallens rubriker fylls i och kompletteras med de poster instruktionens avsnitt 6
+    kräver: förseningsdygn före/efter, antal order som blivit mer försenade och största
+    enskilda försämring, ställtidsbesparingar och antal framdragna order, den
+    klusterpolicy och statusgräns körningen använde, antalet frysta order per
+    frysningsskäl (ömsesidigt uteslutande, med en summeringsrad), kalendertäckning, och
+    vilken <span class="f">NOW_Stockholm</span> som användes för fryslinjen.
+    Utgångsläget redovisas två gånger: bedömt med AI:s statusgräns (jämförbart) och som
+    Jeeves egen <span class="f">ColorName</span>. Finns valideringsanmärkningar listas de
+    sist i fliken.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="validering">
+  <h2><span class="num">10</span>Datavalidering</h2>
+  <p class="deck">
+    Motorn rapporterar inkonsekvent underlag i stället för att jämna ut det.
+  </p>
+
+  <p>
+    Anmärkningar hamnar tre ställen samtidigt: i körloggen, på fliken
+    <em>Anmärkningar</em> i appen (med antalet i flikrubriken) och sist i
+    <span class="f">AI_Sammanfattning</span>. Följande kontrolleras:
+  </p>
+  <ul>
+    <li>Baslinjerader utan matchande operationsrad</li>
+    <li>Op10 med <span class="f">stalltid + stycktid = 0</span> som fått fallback-varaktighet</li>
+    <li>Kalendernr helt utan användbara arbetsfönster</li>
+    <li>Order som schemaläggs bortom kalenderns sista dag</li>
+    <li>Kalenderrader med otolkbart <span class="f">dDate</span></li>
+    <li>Låsta operationer på samma maskin som överlappar varandra i tiden</li>
+  </ul>
+
+  <div class="note flag">
+    <span class="h">Fynd i körningen 2026-09-09</span>
+    <p>En anmärkning: på <strong>ProdGr 1210</strong> överlappar AO#91101
+    (2026-09-08 00:00–09-22 00:00) med AO#90675, som startar inuti det intervallet.</p>
+    <p>Båda är frysta — den ena är igångsatt — så motorn kan varken flytta dem eller
+    välja bort någon. Överlappet finns alltså redan i Jeeves-underlaget och innebär att
+    maskinen enligt planen kör två operationer samtidigt.
+    <strong>Maskinbeläggningen på 1210 behöver ses över i Jeeves.</strong>
+    Motorn låter raderna passera oförändrade och flaggar dem.</p>
+    <p>Samma krock rapporterades i föregående uttag, då med tre inblandade order. Den
+    kvarstår alltså mellan datauttagen.</p>
+  </div>
+
+  <p>
+    Övriga kontroller var rena: samtliga 787 baslinjerader hade matchande operationsrad,
+    kalendern täckte 2026-09-09 till 2027-05-23 för alla fyra kalendernummer, och ingen
+    order behövde extrapoleras utanför den täckningen.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="antaganden">
+  <h2><span class="num">11</span>Antaganden &amp; tolkningar</h2>
+  <p class="deck">
+    Punkter där instruktionen lämnade utrymme, och vilket val som gjordes. Samtliga går
+    att ändra i koden.
+  </p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Fråga</th><th>Val</th><th>Motiv</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="f">OrdBerLevDat</span> i resultatfliken</td>
+        <td>Lagd som kolumn 21, efter mallens tjugo</td>
+        <td>Avsnitt 5 listar den bland originalvärdena men mallen saknar kolumnen. Att lägga den sist bevarar mallens exakta ordning och gör ändå Grön/Röd verifierbart. Styrs av <span class="f">EXTRA_COLUMNS</span>.</td>
+      </tr>
+      <tr>
+        <td>Klustring kontra leveransprecision</td>
+        <td>Räckviddsfönster 30 dygn, skadebudget 0</td>
+        <td>Avsnitt 2.3 kräver aktiv omplanering av samma artikel till obruten följd, men uppgiften överst är att minimera förseningar. Förvalet klustrar allt som är gratis och avstår så fort någon order skulle tappa en leveransdag. Båda värdena ställs i appen — se <a href="#balans">avsnitt 06</a>.</td>
+      </tr>
+      <tr>
+        <td>Vad som räknas som skada i klustringen</td>
+        <td>Faktiska förseningsdygn (<span class="f">PROTECT_MARGIN_DAYS = 0</span>)</td>
+        <td>Skadan mäts som dygn <em>bortom</em> leveransdatumet, inte som förlorad marginal. En grön order som pressas ner i gult kostar därmed noll i prövningen. Sätt konstanten till 1 eller 2 för att skydda även gul- respektive grönbandet.</td>
+      </tr>
+      <tr>
+        <td>Skadeprövningens prognos</td>
+        <td>Bortser från framtida låsta block</td>
+        <td>Prognosen är ett beslutsunderlag, inte schemat. Den faktiska placeringen respekterar alltid de låsta blocken exakt, och verifieringen bekräftar att alla framdragna order verkligen fick bort ställtiden.</td>
+      </tr>
+      <tr>
+        <td>Gul i AI-status</td>
+        <td>Används — marginal exakt ett dygn</td>
+        <td>Sedan v4 är utfallet tregradigt. Gränsen sitter i <span class="f">GREEN_MARGIN_DAYS</span> och gäller både AI-status och den jämförbara baslinjen.</td>
+      </tr>
+      <tr>
+        <td>Frysta order med <span class="f">OpStatus ≠ 0</span> som ännu inte startat</td>
+        <td>Reserverar också sin ursprungliga tid</td>
+        <td>De kan per definition inte flyttas, så maskinen är upptagen. Avsnitt 2.2 säger detta uttryckligen om igångsatta order; samma logik gäller alla låsta rader.</td>
+      </tr>
+      <tr>
+        <td>Dygn med <span class="f">gicktid</span> 23:59 och <span class="f">arbtimperdag</span> 24</td>
+        <td>Ger 23 h 59 min kapacitet</td>
+        <td>Regeln <em>inget arbete utanför komtid–gicktid</em> tolkas bokstavligt. Skarven kostar cirka en minut per dygn och saknar praktisk påverkan på leveransdatum.</td>
+      </tr>
+      <tr>
+        <td>Kalendern tar slut mitt i ett jobb</td>
+        <td>Slutdatum extrapoleras <em>och</em> märks som extrapolerat</td>
+        <td>Avsnitt 1.3 säger flagga hellre än extrapolera. Kompromissen ger ett komplett resultat utan att dölja osäkerheten. Utlöstes inte i denna körning.</td>
+      </tr>
+      <tr>
+        <td>Källflikarna i resultatfilen</td>
+        <td>Skrivs som rena värdetabeller</td>
+        <td>Originalfilen innehåller Power Query-kopplingar och en datamodell. Resultatfilen är en leverans, inte den levande frågearbetsboken — innehållet är identiskt, kopplingarna följer inte med.</td>
+      </tr>
+      <tr>
+        <td>Materialtillgång och personal</td>
+        <td>Modelleras inte</td>
+        <td>Underlaget innehåller ingen sådan data. En order kan därför tidigareläggas till en punkt där materialet inte hunnit fram — kontrollera tidigarelagda order mot inleveransplan innan planen släpps.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note stop">
+    <span class="h">Att vara medveten om</span>
+    <p>Nettot är tydligt positivt — 176 färre röda order och 171 färre förseningsdygn —
+    men <strong>22 order som var gröna eller gula i baslinjen blir röda</strong>, och
+    <strong>111 order blir mer försenade</strong> än i originalplanen. Den största
+    enskilda försämringen är 90 dygn (AO#90315).</p>
+    <p>Det beror inte på klustringen: samma 90-dygnsförsämring uppstår även med ren EDD
+    utan någon framdragning alls. Orsaken är att Jeeves ursprungliga plan lade mer arbete
+    på vissa maskiner än kalendern rymmer. När kapaciteten räknas på riktigt måste den
+    överbelastningen synas någonstans.</p>
+    <p>Filtren <em>Försämrade (→ Röd)</em> och <em>Mer försenade än originalplanen</em> i
+    appen listar exakt dessa order för genomgång.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="verifiering">
+  <h2><span class="num">12</span>Verifiering</h2>
+  <p class="deck">
+    Resultatfilen kontrollerades mot instruktionens regler av ett fristående skript som
+    läser den färdiga Excel-filen — inte motorns interna tillstånd.
+  </p>
+
+  <div class="checks">
+    <div class="check"><span class="m">✓</span><span>Kolumnordning följer mallen exakt</span></div>
+    <div class="check"><span class="m">✓</span><span>787 rader, samma AoNr-ordning som baslinjen</span></div>
+    <div class="check"><span class="m">✓</span><span>Alla rader har ifylld AI_Kommentar</span></div>
+    <div class="check"><span class="m">✓</span><span>Frysta rader: start, slut och TiSlutDat identiska med originalet</span></div>
+    <div class="check"><span class="m">✓</span><span>Frysta rader har inte bytt maskin</span></div>
+    <div class="check"><span class="m">✓</span><span>64 redan påbörjade order helt orörda</span></div>
+    <div class="check"><span class="m">✓</span><span>Ingen icke-Op10-rad omplanerad</span></div>
+    <div class="check"><span class="m">✓</span><span>Rader utan OrdBerLevDat frysta</span></div>
+    <div class="check"><span class="m">✓</span><span>675 omplanerade rader startar aldrig före NOW</span></div>
+    <div class="check"><span class="m">✓</span><span>Inga överlapp som involverar en omplanerad rad</span></div>
+    <div class="check"><span class="m">✓</span><span>Alla starttider ligger inom komtid–gicktid</span></div>
+    <div class="check"><span class="m">✓</span><span>Arbetstid mellan start och slut motsvarar varaktigheten</span></div>
+    <div class="check"><span class="m">✓</span><span>Downstream-delta bevarat exakt, max 0 s avvikelse</span></div>
+    <div class="check"><span class="m">✓</span><span>AI_ColorName följer regel 2.4 på varje rad</span></div>
+    <div class="check"><span class="m">✓</span><span>Grön = marginal &gt; 1 dygn (lägsta uppmätta: 2)</span></div>
+    <div class="check"><span class="m">✓</span><span>Gul = marginal exakt 1 dygn</span></div>
+    <div class="check"><span class="m">✓</span><span>Röd = marginal &lt; 1 dygn (högsta uppmätta: 0)</span></div>
+    <div class="check"><span class="m">✓</span><span>Alla 46 framdragna order fick faktiskt bort ställtiden</span></div>
+    <div class="check"><span class="m">✓</span><span>Total försening inte högre än originalplanen (3&nbsp;979 mot 4&nbsp;150)</span></div>
+    <div class="check"><span class="m">✓</span><span>AI_ColorCode matchar AI_ColorName</span></div>
+    <div class="check"><span class="m">✓</span><span>AI_OpkoPrioritet unik per AI_ProdGr, max 100</span></div>
+    <div class="check"><span class="m">✓</span><span>Prioritet följer faktisk körordning</span></div>
+    <div class="check"><span class="m">✓</span><span>263 ställtidsbesparingar har alla samma ArtNr direkt före</span></div>
+    <div class="check"><span class="m">✓</span><span>Alla 59 maskinbyten finns i Prio1–Prio8</span></div>
+    <div class="check"><span class="m">✓</span><span>Endast rörliga rader har bytt maskin</span></div>
+    <div class="check"><span class="m">✓</span><span>Ingen omrutad order förblev röd</span></div>
+    <div class="check"><span class="m">✓</span><span>CSV har samma rader och kolumner som Excel-fliken</span></div>
+  </div>
+
+  <p style="margin-top:20px">
+    Appen kördes dessutom programmatiskt: filval, körning i bakgrundstråd, samtliga
+    nyckeltal, alla åtta filter, fritextsökning och detaljfönstret verifierades i en
+    automatiserad genomgång.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="felsokning">
+  <h2><span class="num">13</span>Felsökning</h2>
+  <p class="deck">Vanliga stopp och vad de betyder.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Symptom</th><th>Orsak och åtgärd</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><em>Arbetsboken saknar obligatoriska flikar</em></td>
+        <td>Felmeddelandet listar både de saknade och de faktiskt funna fliknamnen. Vanligast är att exporten kortat ett fliknamn på annat sätt än <span class="f">tblSTGetAoColorCodeLis</span>. Justera <span class="f">SHEET_*</span> överst i <span class="f">omplanering_core.py</span>.</td>
+      </tr>
+      <tr>
+        <td>Ovanligt många frysta order</td>
+        <td>Kontrollera <span class="f">NOW_Stockholm</span> i sammanfattningen. Är underlaget uttaget för länge sedan har fler order hunnit passera sin planerade starttid och fryses därför korrekt. Kör mot ett färskt uttag.</td>
+      </tr>
+      <tr>
+        <td>Noll order flyttade till alternativmaskin</td>
+        <td>Bara artiklar med ifylld <span class="f">Prio2</span> eller högre kan ruttas om — i detta underlag 153 av 379 artiklar. Saknas alternativ finns ingen flytt att göra.</td>
+      </tr>
+      <tr>
+        <td>Alla order klara långt fram i tiden</td>
+        <td>Titta på kalendertäckningen i sammanfattningen. Har kalendern få arbetsdagar per vecka för ett <span class="f">kalendernr</span> blir genomloppstiden lång — det är då underlaget, inte motorn, som säger det.</td>
+      </tr>
+      <tr>
+        <td>Excel-filen går inte att skriva</td>
+        <td>Filen är öppen i Excel. Filnamnen är tidsstämplade så att ingen fil skrivs över, men utkatalogen måste vara skrivbar.</td>
+      </tr>
+      <tr>
+        <td>Appen startar inte</td>
+        <td>Kör <span class="f">python omplanering_core.py &lt;fil&gt;</span> först. Går motorn igenom ligger felet i tkinter-installationen; går den inte igenom visar loggen orsaken.</td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer class="end">
+  <p>
+    Alla siffror i dokumentet kommer från körningen 2026-09-09 10:51 mot
+    <span class="f">AI omplanering.xlsx</span> (787 baslinjerader, 3 200 operationsrader).
+    En ny körning ger nya tal — särskilt antalet frysta order, som beror på när körningen
+    görs.
+  </p>
+</footer>
+
+</main>
+</div>

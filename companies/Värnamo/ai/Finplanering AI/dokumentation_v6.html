@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Svensk användar- och flödesdokumentation för AI Omplanering V6: valbar låshorisont, kalenderplanering, förseningsstak, lokal reparation och resultat.">
+  <title>AI Omplanering V6 – användning, flöde och beslut</title>
+  <style>
+    :root { color-scheme: light; --bg:#f2f5f7; --paper:#fff; --ink:#192c3b; --muted:#4e6170; --line:#cbd7df; --blue:#214e79; --blue-bg:#e9f1fa; --teal:#08656b; --teal-bg:#e6f3f2; --amber:#80550c; --amber-bg:#fff4db; --green:#21603d; --green-bg:#e7f4eb; --red:#98392e; --red-bg:#fcece8; --shadow:0 5px 22px #192c3b09; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.65 "Segoe UI",Tahoma,Arial,sans-serif; }
+    a { color:var(--blue); text-underline-offset:3px; overflow-wrap:anywhere; }
+    a:hover { color:var(--teal); }
+    :focus-visible { outline:3px solid var(--blue); outline-offset:4px; }
+    .skip { position:absolute; top:-100px; left:16px; z-index:2; padding:12px; background:white; }
+    .skip:focus { top:12px; }
+    .page { max-width:1320px; margin:auto; padding:24px clamp(16px,3vw,44px) 48px; }
+    .eyebrow { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; color:var(--muted); font-size:.8rem; letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--line); padding-bottom:14px; }
+    header { padding:22px 0 4px; }
+    h1 { font-size:clamp(2rem,4vw,3.2rem); line-height:1.13; margin:10px 0 16px; letter-spacing:-.035em; }
+    h2 { font-size:clamp(1.4rem,2.6vw,1.85rem); line-height:1.25; margin:0 0 12px; }
+    h3 { font-size:1.1rem; line-height:1.4; margin:0 0 8px; }
+    h4 { font-size:1rem; margin:18px 0 6px; }
+    p { margin:0 0 12px; }
+    li + li { margin-top:7px; }
+    ul,ol { padding-left:24px; }
+    .intro { max-width:950px; font-size:1.15rem; color:var(--muted); }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0; }
+    .chip { padding:6px 12px; border:1px solid var(--line); border-radius:30px; background:var(--paper); font-size:.85rem; font-weight:600; }
+    nav { display:flex; flex-wrap:wrap; gap:8px 20px; background:var(--paper); padding:16px 20px; border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); }
+    nav a { font-size:.9rem; font-weight:600; }
+    section { margin-top:42px; scroll-margin-top:20px; }
+    .lead,.note { color:var(--muted); }
+    .note { font-size:.9rem; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    .card { padding:20px 22px; border:1px solid var(--line); border-radius:10px; background:var(--paper); box-shadow:var(--shadow); min-width:0; }
+    .card p:last-child,.callout p:last-child { margin-bottom:0; }
+    .tag { display:block; font-size:.78rem; color:var(--teal); text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:8px; }
+    .locked { border-top:4px solid var(--blue); }
+    .repair { border-top:4px solid var(--amber); }
+    .accepted { border-top:4px solid var(--green); }
+    .rejected { border-top:4px solid var(--red); }
+    .callout { margin:18px 0; padding:17px 20px; border-left:5px solid var(--teal); background:var(--teal-bg); border-radius:0 8px 8px 0; }
+    .callout.warning { border-color:var(--amber); background:var(--amber-bg); }
+    .callout strong { display:block; margin-bottom:5px; }
+    code,kbd { font: .88em/1.5 Consolas,"Courier New",monospace; overflow-wrap:anywhere; }
+    code { background:#edf2f5; padding:2px 5px; border-radius:4px; }
+    .command { display:block; padding:12px 16px; background:#192c3b; color:#fff; margin:12px 0; }
+    .formula { display:block; font-family:Consolas,"Courier New",monospace; padding:12px 16px; background:#edf2f5; border-radius:6px; overflow-wrap:anywhere; }
+    .table-wrap { overflow:auto; background:var(--paper); border:1px solid var(--line); border-radius:9px; margin:16px 0; }
+    table { width:100%; border-collapse:collapse; min-width:640px; font-size:.94rem; }
+    caption { text-align:left; font-weight:700; padding:12px 16px; background:#f6f9fa; }
+    th,td { text-align:left; vertical-align:top; padding:12px 16px; border-bottom:1px solid var(--line); }
+    thead th { background:#eaf0f5; font-size:.85rem; }
+    tbody th { font-weight:600; }
+    tr:last-child > * { border-bottom:0; }
+    .map { padding:14px; background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:auto; }
+    .map svg { display:block; width:100%; min-width:800px; height:auto; }
+    svg .lane { fill:#f5f8fa; stroke:#d6e0e7; }
+    svg .lane-label { font:700 13px "Segoe UI",Arial,sans-serif; fill:#4e6170; letter-spacing:1px; }
+    svg .box { fill:#fff; stroke:#08656b; stroke-width:2; }
+    svg .input { fill:#e6f3f2; }
+    svg .lock { fill:#e9f1fa; stroke:#214e79; }
+    svg .check { fill:#fff4db; stroke:#80550c; stroke-width:2; }
+    svg .good { fill:#e7f4eb; stroke:#21603d; }
+    svg .fail { fill:#fcece8; stroke:#98392e; }
+    svg .title { font:700 17px "Segoe UI",Arial,sans-serif; fill:#192c3b; text-anchor:middle; }
+    svg .text { font:14px "Segoe UI",Arial,sans-serif; fill:#344d60; text-anchor:middle; }
+    svg .edge { fill:none; stroke:#526b7c; stroke-width:2.4; marker-end:url(#arrow); }
+    svg .loop { fill:none; stroke:#80550c; stroke-width:2.4; marker-end:url(#repair-arrow); }
+    svg .label { font:700 13px "Segoe UI",Arial,sans-serif; fill:#344d60; }
+    .legend { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:12px; font-size:.85rem; }
+    .legend span { display:flex; align-items:center; gap:8px; }
+    .dot { width:13px; height:13px; border:1px solid currentColor; border-radius:3px; display:inline-block; }
+    .dot.blue { color:var(--blue); background:var(--blue-bg); }
+    .dot.amber { color:var(--amber); background:var(--amber-bg); }
+    .dot.green { color:var(--green); background:var(--green-bg); }
+    .dot.red { color:var(--red); background:var(--red-bg); }
+    .steps { counter-reset:steps; list-style:none; padding:0; }
+    .steps li { counter-increment:steps; position:relative; padding:14px 16px 14px 60px; background:var(--paper); border:1px solid var(--line); border-radius:8px; margin:10px 0; }
+    .steps li::before { content:counter(steps); position:absolute; left:16px; top:16px; width:29px; height:29px; text-align:center; line-height:29px; border-radius:50%; background:var(--blue-bg); color:var(--blue); font-weight:700; }
+    .kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .kpis .card { font-size:.93rem; }
+    dt { font-weight:700; margin-top:14px; }
+    dd { margin:4px 0 0; color:var(--muted); }
+    footer { border-top:1px solid var(--line); margin-top:40px; padding-top:18px; color:var(--muted); font-size:.85rem; }
+    @media (max-width:760px) { .grid,.kpis { grid-template-columns:1fr; } .page { padding-inline:16px; } .card { padding:18px; } nav { gap:10px 16px; } }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print {
+      @page { margin:14mm; }
+      body { background:white; font-size:10pt; }
+      .page { max-width:none; padding:0; }
+      nav,.skip { display:none; }
+      section { margin-top:22px; }
+      h2,h3 { break-after:avoid; }
+      .card,.callout,.steps li,figure { break-inside:avoid; box-shadow:none; }
+      .table-wrap,.map { overflow:visible; }
+      table,.map svg { min-width:0; }
+      table { font-size:9pt; }
+      th,td { padding:7px; }
+      thead { display:table-header-group; }
+      tr { break-inside:avoid; }
+      a { color:inherit; }
+      .grid,.kpis { gap:10px; }
+      .command { background:#edf2f5; color:#192c3b; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#innehall">Hoppa till innehållet</a>
+  <div class="page">
+    <div class="eyebrow"><span>Finplanering · Op10 · V6.0</span><span>Dokumentationsöversikt · 2026-10-08</span></div>
+    <header>
+      <h1>Så fungerar AI Omplanering V6</h1>
+      <p class="intro">En körningslokal låshorisont – samma planeringslogik som V5. Motorn försöker förbättra leveransutfallet utan att öka en enskild orders faktiska försening. Vid behov låses berörda order tillbaka till originalslotten, medan andra säkra ändringar kan behållas.</p>
+      <div class="chips" aria-label="Grundregler"><span class="chip">Endast Op10 flyttas</span><span class="chip">Valbar horisont · standard 4 h</span><span class="chip">0 extra tardiness per order</span><span class="chip">Lika affärsvikt</span><span class="chip">Heuristisk sökning</span><span class="chip">Offline · ingen CDN</span></div>
+    </header>
+    <nav aria-label="Innehåll">
+      <a href="#oversikt">1. Översikt</a><a href="#anvandning">2. Start &amp; användning</a><a href="#horisont">3. Låshorisont</a><a href="#flode">4. Flödesschema</a><a href="#mal">5. Mål &amp; begränsningar</a><a href="#poang">6. Poäng &amp; status</a><a href="#exempel">7. Exempel</a><a href="#parametrar">8. Parametrar</a><a href="#kpi">9. KPI &amp; sammanfattning</a><a href="#export">10. Leverans &amp; spårbarhet</a><a href="#ordlista">11. Ordlista &amp; källor</a>
+    </nav>
+    <main id="innehall">
+      <section id="oversikt" aria-labelledby="oversikt-rubrik">
+        <h2 id="oversikt-rubrik">1. Vad är nytt – och vad är oförändrat?</h2>
+        <div class="grid">
+          <article class="card locked"><span class="tag">Nyhet i V6</span><h3>Välj låshorisont före varje körning</h3><p>Fältet <strong>Låshorisont</strong> anger timmar från körningens <code>NOW_Stockholm</code>. Förvalet är <strong>4</strong>; exempelvis <strong>2,5</strong>, <strong>8</strong> eller <strong>0</strong> kan användas. Värdet tas med till just den körningen och ändrar inte någon global motorinställning.</p><p>V6 sparar egna UI-inställningar, visar använd horisont i logg och sammanfattning och använder versionsmarkören <code>_v6_resultat_</code> i exportnamnen.</p></article>
+          <article class="card"><span class="tag">Bevarat från V5</span><h3>Samma planerings- och skyddsregler</h3><p>Kalenderberäkning, EDD-baserad sekvensering, villkorad artikelklustring, alternativruttning, progressiv förseningspoäng och individuellt förseningsstak är oförändrade. Lokal takreparation följs av återgång till originalplanen om kandidaten fortfarande är ofullständig eller bryter taket.</p><p><strong>SQL-tjänsten ändras inte och fortsätter med V5.</strong> Den här sidan gäller V6-skrivbordsappen och V6-motorns Excel-, Python- och CLI-väg.</p></article>
+        </div>
+        <aside class="callout warning"><strong>Ett planförslag, inte ett genomförbarhetsbevis</strong><p>V6 är inte en fullständig matematisk optimeringslösare och garanterar inte global optimalitet. Ett godkänt förslag betyder att motorns tak- och fullständighetsfilter har passerats, inte att material, bemanning, alla operationsberoenden eller originalplanens fysiska genomförbarhet har verifierats. Granska anmärkningar och verksamhetens verkliga förutsättningar före användning.</p></aside>
+      </section>
+
+      <section id="anvandning" aria-labelledby="anvandning-rubrik">
+        <h2 id="anvandning-rubrik">2. Starta och använd skrivbordsappen</h2>
+        <p>Starta från projektroten i en Python-miljö med beroendena i <a href="requirements.txt">requirements.txt</a> installerade:</p>
+        <code class="command">python omplanering_app_v6.py</code>
+        <ol class="steps">
+          <li><strong>Välj Arbetsbok.</strong> Klicka på <em>Bläddra…</em> och välj Excel-underlaget. De fyra obligatoriska källflikarna och deras kolumner måste finnas; motorn accepterar inte automatiskt andra fliknamn.</li>
+          <li><strong>Välj Utkatalog.</strong> Vid nytt filval föreslås normalt en <em>output</em>-mapp bredvid arbetsboken om fältet är tomt. En tidigare sparad utkatalog kan redan vara vald: kontrollera den.</li>
+          <li><strong>Kontrollera Klustring → Fönster och Låshorisont.</strong> Standard är 30 dygn respektive 4 timmar. Ange klusterfönstret som ett heltal minst 0. Låshorisonten kan vara ett decimaltal med punkt eller komma.</li>
+          <li><strong>Tryck Kör omplanering.</strong> Värdena läses på UI-tråden och skickas som en ögonblicksbild till arbetstråden. Ändring av fält under körningen påverkar inte den pågående beräkningen. Körknappen är avstängd medan arbetet pågår.</li>
+          <li><strong>Läs Sammanfattning och Anmärkningar.</strong> Kontrollera först planstatus, förseningsstak, oplanerade kandidater och datakonflikter. Körloggen visar policy, klassificering, maskinplanering, ruttning och eventuella reparationer.</li>
+          <li><strong>Granska Resultat per order.</strong> Filtrera på AI-färg, förbättring, maskinbyte, ställtid eller frysningsorsak. Sök på AO, kundorder, artikel eller ProdGr. Dubbelklicka för en läsbar radkommentar.</li>
+          <li><strong>Öppna Excel, CSV eller mapp.</strong> Knapparna aktiveras efter en lyckad körning. Förhandsvisningen visar högst 3&nbsp;000 matchande rader; exporter innehåller hela resultattabellen.</li>
+        </ol>
+        <div class="grid">
+          <article class="card"><h3>Inställningar mellan starter</h3><p>Vid körstart sparas arbetsbok, utkatalog, klusterfönster och validerad låshorisont i den separata V6-filen <code>.omplanering_ui_v6.json</code> bredvid appen. Detta påverkar inte V5:s inställningar. Första start, saknad eller felaktig JSON och saknad/ogiltig sparad horisont ger standardvärdet 4.</p><p class="note">Sparningen är inte en körningshistorik. Om inställningsfilen inte kan skrivas kan körningen ändå fortsätta; dokumentera därför den faktiskt använda policyn från resultatet.</p></article>
+          <article class="card"><h3>Även via CLI och Python</h3><p>CLI har flaggan <code>--lock-horizon-hours</code>, med 4 som standard. Exempel:</p><code class="command">python omplanering_core_v6.py "underlag.xlsx" --lock-horizon-hours 2,5</code><p>I Python tar både <code>run_replanning()</code> och <code>compute_plan()</code> argumentet <code>lock_horizon_hours=4</code>. UI-inställningsfilen läses inte av CLI/motorn; ange önskat värde uttryckligen där.</p></article>
+        </div>
+      </section>
+
+      <section id="horisont" aria-labelledby="horisont-rubrik">
+        <h2 id="horisont-rubrik">3. Låshorisonten: inkluderande gräns och separat startlås</h2>
+        <p class="lead">Låset bedöms mot <strong>ursprunglig Op10-start</strong>, inte mot den föreslagna starten. Den valda horisonten är en frysningsregel – inte en gräns för hur långt fram hela planen beräknas.</p>
+        <p class="formula">Flyttbar endast om övriga villkor är uppfyllda och originalstart &gt; NOW_Stockholm + lock_horizon_hours timmar.</p>
+        <div class="grid">
+          <article class="card locked"><h3>Vid eller före nu: redan påbörjad</h3><p><code>originalstart ≤ NOW_Stockholm</code> fryses alltid, även vid horisont 0. Motorn använder starttidpunkten som startindikator; det betyder inte att faktisk produktionsstart har bekräftats av en separat signal.</p></article>
+          <article class="card locked"><h3>Efter nu, till och med gränsen: horisontlåst</h3><p>För relevant Op10 med status 0 och leveransdatum gäller <code>nu &lt; originalstart ≤ horisontslut</code>. Start <strong>exakt på gränsen är fryst</strong>. Originalstart, originalslut och originalmaskin behålls.</p></article>
+        </div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Gränsexempel för låshorisont">
+          <table><caption>Exempel: NOW_Stockholm = 2026-10-08 kl. 08:00; annars kvalificerad Op10</caption><thead><tr><th scope="col">Vald horisont</th><th scope="col">Originalstart</th><th scope="col">Utfall</th><th scope="col">Varför?</th></tr></thead><tbody>
+            <tr><td>4 h (standard)</td><td>12:00</td><td>Fryst</td><td>Exakt på den inkluderande gränsen.</td></tr>
+            <tr><td>4 h</td><td>12:01</td><td>Flyttbar</td><td>Senare än 12:00; övriga villkor måste också passeras.</td></tr>
+            <tr><td>2,5 h</td><td>11:00</td><td>Flyttbar</td><td>Gränsen är 10:30, inte 12:00.</td></tr>
+            <tr><td>8 h</td><td>14:00</td><td>Fryst</td><td>Sex timmar framåt ligger inom åttatimmarsfönstret.</td></tr>
+            <tr><td>0 h</td><td>08:01</td><td>Flyttbar</td><td>Inget framtida låsfönster.</td></tr>
+            <tr><td>0 h</td><td>08:00 eller 07:30</td><td>Fryst</td><td>Vid eller före nu: redan påbörjad enligt motorns regel.</td></tr>
+            <tr><td>0 h</td><td>13:00, OpStatus = 1</td><td>Fryst</td><td>Noll tar inte bort status- eller datalås.</td></tr>
+          </tbody></table>
+        </div>
+        <aside class="callout"><strong>Validering före planering</strong><p>Ändliga, icke-negativa timmar godtas, inklusive decimalpunkt och decimalkomma. Tomt fält, text, negativa värden, NaN och oändlighet avvisas. Även extremt stora tal som inte ryms i datumintervallet eller inte kan adderas till aktuell <code>NOW_Stockholm</code> avvisas. Ett mindre värde gör fler framtida rader valbara, men garanterar inte fler ändringar eller ett bättre resultat.</p></aside>
+      </section>
+
+      <section id="flode" aria-labelledby="flode-rubrik">
+        <h2 id="flode-rubrik">4. Flödesschema – från arbetsbok till leverans</h2>
+        <p class="lead">Visio-liknande beslutsflöde med separata spår för indata, planering, kontroll och leverans. På liten skärm kan diagrammet rullas i sidled; samma steg beskrivs i läsordning i korten nedanför.</p>
+        <figure style="margin:16px 0">
+          <div class="map" tabindex="0" role="region" aria-label="Rullbart planeringsdiagram">
+            <svg viewBox="0 0 1120 1120" role="img" aria-labelledby="flow-title flow-desc">
+              <title id="flow-title">V6: klassificering, kalenderplanering, lokal takreparation och säkerhetsåterfall</title>
+              <desc id="flow-desc">Läs och validera indata och horisont. Klassificera rader och reservera frysta Op10-intervall. Planera flyttbara order med EDD, kalender, villkorad klustring och alternativruttning. Kontrollera att kandidaten är komplett utan ökande försening per order. Vid fel, återställ berörda order till originalslot och planera om. Upprepa kontrollen; om ingen ytterligare reparation är möjlig och fel kvarstår återställ hela originalplanen. Exportera antingen det godkända förslaget eller återfallet med varningar och spårbar policy.</desc>
+              <defs>
+                <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#526b7c"/></marker>
+                <marker id="repair-arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#80550c"/></marker>
+              </defs>
+              <rect class="lane" x="10" y="10" width="1100" height="280" rx="8"/><text class="lane-label" x="28" y="35">A · INDATA OCH KLASSIFICERING</text>
+              <rect class="lane" x="10" y="300" width="1100" height="220" rx="8"/><text class="lane-label" x="28" y="325">B · PLANERING</text>
+              <rect class="lane" x="10" y="530" width="1100" height="340" rx="8"/><text class="lane-label" x="28" y="555">C · KONTROLL OCH REPARATION</text>
+              <rect class="lane" x="10" y="880" width="1100" height="230" rx="8"/><text class="lane-label" x="28" y="905">D · VALD PLAN OCH LEVERANS</text>
+              <path class="edge" d="M345 110H425"/><path class="edge" d="M755 110H815V180H755"/>
+              <path class="edge" d="M425 220H345"/><text class="label" x="358" y="207">FRYST</text>
+              <path class="edge" d="M590 265V360"/><text class="label" x="603" y="345">FLYTTBAR</text>
+              <path class="edge" d="M205 265V430H425"/>
+              <path class="edge" d="M755 420H805"/><path class="edge" d="M925 480V548H590V580"/>
+              <path class="edge" d="M445 665H360"/><text class="label" x="383" y="650">NEJ</text>
+              <path class="edge" d="M590 750V810H500V950"/><text class="label" x="515" y="800">JA</text>
+              <path class="loop" d="M190 605V575H385V490H530"/><text class="label" x="30" y="568">Nya lås → planera om → kontrollera igen</text>
+              <path class="edge" d="M190 730V785H360V950"/><text class="label" x="35" y="817">Fel kvarstår, inga fler</text><text class="label" x="35" y="836">originalslotar kan låsas</text>
+              <path class="edge" d="M590 1000H605"/><path class="edge" d="M310 1035V1085H740V1050"/>
+              <rect class="box input" x="65" y="65" width="280" height="90" rx="8"/><text class="title" x="205" y="94">1 · Läs och validera</text><text class="text" x="205" y="117"><tspan x="205">Fyra källflikar · nycklar · datum</tspan><tspan x="205" dy="20">tider · kalender · valda parametrar</tspan></text>
+              <rect class="box input" x="425" y="65" width="330" height="90" rx="8"/><text class="title" x="590" y="94">2 · Bygg kalender och fryslinje</text><text class="text" x="590" y="117"><tspan x="590">NOW_Stockholm bestäms en gång</tspan><tspan x="590" dy="20">gräns = nu + vald horisont</tspan></text>
+              <rect class="box" x="425" y="180" width="330" height="85" rx="8"/><text class="title" x="590" y="210">3 · Klassificera varje rad</text><text class="text" x="590" y="235">Op10 · status 0 · data · start efter gräns?</text>
+              <rect class="box lock" x="65" y="180" width="280" height="85" rx="8"/><text class="title" x="205" y="209">4 · Behåll frysta originaltider</text><text class="text" x="205" y="233"><tspan x="205">Giltiga Op10-slotar blir fasta block</tspan><tspan x="205" dy="19">överlapp rapporteras</tspan></text>
+              <rect class="box" x="425" y="360" width="330" height="130" rx="8"/><text class="title" x="590" y="392">5 · Planera maskinköerna</text><text class="text" x="590" y="418"><tspan x="590">EDD-bas · kalender · fasta block</tspan><tspan x="590" dy="20">villkorad ställtidsbesparing</tspan><tspan x="590" dy="20">prognos för återstående kö</tspan></text>
+              <rect class="box" x="805" y="360" width="240" height="120" rx="8"/><text class="title" x="925" y="393">6 · Prova alternativrutt</text><text class="text" x="925" y="418"><tspan x="925">Tillåtna ProdGr · högst 4 pass</tspan><tspan x="925" dy="20">planjämförelse på båda maskiner</tspan><tspan x="925" dy="20">sluttid inklusive fast ledtid</tspan></text>
+              <polygon class="check" points="590,580 735,665 590,750 445,665"/><text class="title" x="590" y="645"><tspan x="590">7 · Komplett?</tspan><tspan x="590" dy="23">0 individuella takbrott?</tspan></text><text class="text" x="590" y="697">Kontrollera båda kraven</text>
+              <rect class="box check" x="30" y="605" width="330" height="125" rx="8"/><text class="title" x="195" y="636">8 · Lokal takreparation</text><text class="text" x="195" y="661"><tspan x="195">Lås försämrade/oplanerade order</tspan><tspan x="195" dy="20">till originalstart, slut och maskin</tspan><tspan x="195" dy="20">replanera resten och upprepa</tspan></text>
+              <rect class="box good" x="470" y="950" width="120" height="85" rx="8"/><text class="title" x="530" y="980">9 · Förslag</text><text class="text" x="530" y="1006">Godkänt filter</text>
+              <rect class="box fail" x="180" y="950" width="260" height="85" rx="8"/><text class="title" x="310" y="980">10 · Säkerhetsåterfall</text><text class="text" x="310" y="1005">Hela originalplanen behålls</text>
+              <rect class="box input" x="605" y="950" width="370" height="100" rx="8"/><text class="title" x="790" y="980">11 · Prioritet, kommentarer och export</text><text class="text" x="790" y="1005"><tspan x="790">Excel + CSV · KPI · anmärkningar</tspan><tspan x="790" dy="20">V6-markör och använd horisont</tspan></text>
+            </svg>
+          </div>
+          <figcaption class="legend"><span><i class="dot blue" aria-hidden="true"></i>Fryst/fasta tider</span><span><i class="dot amber" aria-hidden="true"></i>Kontroll/reparation</span><span><i class="dot green" aria-hidden="true"></i>Godkänt förslag</span><span><i class="dot red" aria-hidden="true"></i>Återfall till original</span></figcaption>
+        </figure>
+        <div class="grid">
+          <article class="card"><span class="tag">1 · Läs och validera</span><h3>Exakta fliknamn och matchande operationer</h3><p>Motorn kräver <code>tblSTGetAoColorCodeLis</code>, <code>tblSTAllOperationsForAoNr</code>, <code>tblSTGetDateCalenderWorkingTime</code> och <code>tblSTProductionGroupPrioOnItem</code>. Resultat- och sammanfattningsmall behöver inte redan finnas. Saknade obligatoriska flikar/kolumner avbryter körningen.</p><p>Baslinjer kopplas till operationer med <code>(AoNr, AoPos, OpNr)</code>. Datum konverteras och ProdGr normaliseras, exempelvis 10122.0 till 10122. Dubbla baslinjenycklar bokas en gång: tidigast leveransdatum väljs och konflikter rapporteras. Andra kundorders datum för samma operation ingår då inte som separata resultat.</p></article>
+          <article class="card"><span class="tag">2 · Kalender och fryslinje</span><h3>Känd arbetstid, ingen extrapolerad placering</h3><p>Arbetsfönster byggs från ankomst/avgång och <code>arbtimperdag</code>. För idag används <code>arbtimperdag_firstdaymode</code> när den finns, och start kapas vid nu. Operationer kan fortsätta i nästa kända arbetspass när dagens tid inte räcker.</p><p>V6:s aktiva placering returnerar ingen start/slut om kalender saknas eller tiden inte ryms i känd täckning. Den förlänger inte schemat med påhittade arbetsdagar. ProdGr kopplas normalt till det vanligaste kalendernumret i operationsunderlaget.</p></article>
+          <article class="card"><span class="tag">3 · Klassificera</span><h3>Flyttbar är inte samma sak som ändrad</h3><p>Flyttbarhet kräver matchande operationsrad, Op10, status 0, ursprunglig start efter horisontgränsen, positiv <code>stalltid + stycktid</code>, leveransdatum och användbar kalender. Saknad originalstart, operationsdata, varaktighet, leveransdag eller kalender medför frysning.</p><p>Övriga operationer lämnas oflyttade. Att en rad är flyttbar innebär bara att den kan delta i sökningen; den kan ändå få samma tid/maskin eller låsas lokalt i takreparationen.</p></article>
+          <article class="card locked"><span class="tag">4 · Fasta block</span><h3>Reservera frysta Op10-slotar</h3><p>Frysta Op10 med originalstart och originalslut läggs som fasta intervall på originalmaskinen. Nya placeringar görs runt dessa; vid konflikt går sökningen vidare efter det fasta intervallet. Saknade originalintervall kan inte reserveras som fullständiga block.</p><p>Överlapp mellan fasta block rapporteras men tiderna flyttas inte bort. Motorns maskinblockering omfattar Op10; andra operationer flyttas inte, men modelleras inte som ett fullständigt gemensamt resursschema.</p></article>
+          <article class="card"><span class="tag">5 · Sekvensering och klustring</span><h3>EDD-bas med prognos över hela kvarvarande kön</h3><p>Grundordningen är stigande <code>OrdBerLevDat</code>, sedan <code>AoNr</code>. Vid varje val provas återstående kandidater; prognosen placerar första kandidaten och därefter resten i kvarvarande grundordning runt fasta block. Prognosen rangordnas efter tak, gröna order, poäng och andra mål.</p><p>Ställtid kan sparas för en order med positiv ställtid när den föregående operationen på samma maskin har samma artikel. En fryst order kan vara referens utan att själv flyttas. För en kandidat dragen förbi EDD styr det valda klusterfönstret om besparingen får räknas. Fönstret är <strong>inte</strong> ett generellt förbud mot all omordning utanför 30 dygn.</p></article>
+          <article class="card"><span class="tag">6 · Alternativrutt och sluttid</span><h3>Utvärdera både käll- och målmaskin</h3><p>Flyttbara, ännu inte gröna order utan redan accepterat maskinbyte prövas mot listade alternativ. Koden läser tillgängliga <code>Prio1–Prio8</code>, tar bort aktuell maskin och dubbla alternativ och provar i listordning, med målmaskinens kalender. Högst fyra ruttningspass görs.</p><p>Flytten behålls bara om hela planens jämförelsetupel förbättras strikt; båda maskinköerna räknas om. Därefter beräknas <code>AI_TiSlutDat = AI_Op10-slut + max(0, original TiSlutDat − original Op10-slut)</code>. Efterföljande operationer schemaläggs inte på nytt i detalj.</p></article>
+          <article class="card repair"><span class="tag">7 · Kontroll</span><h3>Individuellt tak och komplett kandidat</h3><p>Varje relevant rad med leveransdatum jämförs med sin egen originalsluttid. Positiv ökning av exakt faktisk tardiness räknas som takbrott; små numeriska avvikelser inom toleransen ignoreras. En flyttbar order utan beräknad sluttid räknas som oplanerad.</p><p>Färre röda eller lägre totalpoäng kompenserar inte för att en annan order får mer faktisk försening. Saknat leveransdatum ingår inte i poäng-/takmåtten; ett nollvärde i totalerna intygar därför inte att all indata är komplett.</p></article>
+          <article class="card repair"><span class="tag">8 · Reparation och ny kontroll</span><h3>Återställ berörda order – behåll andra förbättringar</h3><p>Försämrade och oplanerade flyttbara order tas ur de rörliga maskinköerna och låses till originaltid/-maskin när nödvändiga originalvärden finns. Ställtidsbesparing och eventuell omruttning nollställs för dessa order.</p><p>Motorn schemalägger sedan om maskinköerna och räknar alla sluttider igen. Nya takbrott kan uppstå när originalslotar reserveras, så kontrollen upprepas. Alla nu identifierade reparerbara order kan låsas i samma omgång, inte bara en enda.</p></article>
+          <article class="card accepted"><span class="tag">9 · Godkänt filter</span><h3>Exportera den kvarvarande kandidaten</h3><p>Om den reparerade kandidaten saknar individuella takbrott och oplanerade flyttbara order behålls den. Originalslotar som låstes lokalt redovisas, tillsammans med andra faktiska ändringar. Ett V6-förslag kan fortfarande ha datavarningar och behöver granskas.</p></article>
+          <article class="card rejected"><span class="tag">10 · Återfall</span><h3>Ingen godkänd kandidat hittades i denna sökning</h3><p>Finns fel kvar när lokal reparation inte kan lösa dem återställs hela originalplanens tider och maskiner. Kandidatens kvarvarande takbrott och oplanerade order redovisas separat; ändringar, maskinbyten och klustervinster återställs till noll.</p><p>Återfallet bevisar varken att bättre planer saknas eller att originalet är fysiskt genomförbart. Originalets överlapp kan följa med. Färger och AI-prioriteter kan fortfarande räknas om med V6-regler.</p></article>
+          <article class="card"><span class="tag">11 · Prioritet och leverans</span><h3>Förklaring per rad och spårbar export</h3><p><code>AI_OpkoPrioritet</code> sätts efter faktisk starttid per ProdGr: 100, 99, 98 … med slut och AO som skiljekriterier. Rader utan start hamnar sist. Det är en härledd rang, inte originalets affärsprioritet eller ett sätt att flytta frysta tider.</p><p>Kommentarer visar identitet, beslut, maskinbyte, föregångare/efterföljare, eventuell klustring, status/marginal, poäng och varningar. Excel och CSV skrivs i vald utkatalog.</p></article>
+        </div>
+      </section>
+
+      <section id="mal" aria-labelledby="mal-rubrik">
+        <h2 id="mal-rubrik">5. Målordning och vad heuristiken faktiskt gör</h2>
+        <p class="lead">Målen jämförs hierarkiskt, inte som en enda godtycklig viktad summa. Men endast de kandidater som heuristiken provar jämförs – inte alla möjliga planer.</p>
+        <ol>
+          <li><strong>Frysning, kalender och modellens maskinregler.</strong> Respektera skyddade tider och tillgängliga arbetsfönster för nya placeringar.</li>
+          <li><strong>Individuellt förseningsstak och fullständighet.</strong> Jämförelsetupeln prioriterar antal takbrott, total takökning och största takökning. Oplanerade flyttbara jobb får stora straffvärden. Slutfiltret kräver både noll takbrott och inga oplanerade flyttbara order.</li>
+          <li><strong>Flest gröna order.</strong> Varje order har samma affärsvikt; stycktid används som kapacitetsåtgång, inte som poängvikt.</li>
+          <li><strong>Lägst sammanlagd progressiv förseningspoäng.</strong> Även en order som inte kan bli grön har ett värde genom lägre försening.</li>
+          <li><strong>Minsta största individuella tardiness.</strong> Skydda mot enskilda extremfall när högre mål är lika.</li>
+          <li><strong>Mindre total tidighet.</strong> Tidig färdigställning är ett lägre mål och ger inte positiva förseningspoäng.</li>
+          <li><strong>Drift och stabilitet som skiljekriterier.</strong> Ställtid, omruttningar och planändringar kommer efter leveransmålen; se implementationsnyansen nedan.</li>
+        </ol>
+        <aside class="callout warning"><strong>Viktig skillnad mellan avsikt och implementation</strong><p>Köprognosen använder <code>−setup_total</code> och föredrar därmed mer sparad ställtid när högre mål är lika. Planjämförelsen vid alternativruttning använder däremot <code>+setup_total</code>, följt av antal omruttningar och ändrade <em>starttider</em>. Den sista delen är därför inte en helt konsekvent gemensam optimering av ställtidsbesparing. Beskriv inte V6 som en exakt realisering av alla affärsmål eller som en global minimering av ställtid.</p></aside>
+        <div class="grid">
+          <article class="card"><h3>Begränsad sökning och väntetid</h3><p>EDD-baserade köprognoser, en begränsad alternativruttning och låsning till originalslot är lokala heuristiska beslut. De kan missa andra bra kombinationer och låsa fler order än nödvändigt. Schemaläggningen söker placeringar från nu; målet att minska tidighet innebär inte att all möjlig avsiktlig väntan undersöks.</p></article>
+          <article class="card"><h3>Indata och fysisk verklighet</h3><p>Material, bemanning, underhåll och verkliga beroenden kontrolleras inte som separata fullständiga modeller. Kalendern kan bara återspegla det som faktiskt matats in. Maskinkopplingar kan använda kalenderfallback från underlaget. Alternativlistan byggs per artikel och koden filtrerar inte separat på listans <code>OpNr</code>; kontrollera därför att den verkligen avser godkända Op10-maskiner.</p><p>Originaltider som fryses eller återställs kalendervalideras inte som nyplacerade operationer. Null/okänd originalfärg normaliseras till Grön som fallback om marginal inte går att beräkna. Granska källdata; anta inte att fallbackfärg betyder verifierad leveransprecision.</p></article>
+        </div>
+      </section>
+
+      <section id="poang" aria-labelledby="poang-rubrik">
+        <h2 id="poang-rubrik">6. Förseningsstak, kumulativ poäng och färgstatus</h2>
+        <div class="grid">
+          <article class="card"><h3>Exakt tid för poäng och cap</h3><p><strong>Tardiness</strong> = max(0, färdigtid − leveranstid), räknat i kalenderdygn med deldagar. Färdigtid är <code>AI_TiSlutDat</code>, inte bara Op10-slut. Originalet beräknas med samma tidsregel.</p><p><strong>Cap excess</strong> = max(0, ny tardiness − original tardiness). En order som var 4 dygn sen får bli 4 eller färre dygn sen, inte 4,5. Förbättring av andra order får inte kvitta ökningen.</p></article>
+          <article class="card"><h3>Datumnivå för status och försenings-KPI</h3><p>Status använder skillnaden mellan <em>kalenderdatumen</em>, utan klockslag: mer än 1 dags marginal = <strong>Grön</strong>; exakt 1 = <strong>Gul</strong>; mindre än 1 = <strong>Röd</strong>. Samma regel räknar om baslinjen för jämförelsen.</p><p>Desktopens KPI <em>Förseningsdygn</em> använder också datumskillnad. Poäng och cap använder däremot exakta tidsstämplar. En skillnad på några timmar kan därför synas i poäng/cap men inte i KPI-kortets hela dygn.</p></article>
+        </div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Progressiv poängtrappa">
+          <table><caption>Progressiv marginalkostnad per order – trösklarna summeras</caption><thead><tr><th scope="col">Del av försening t</th><th scope="col">Poäng per dygn i intervallet</th><th scope="col">Kumulativ poäng S(t)</th><th scope="col">Vid övre gräns</th></tr></thead><tbody>
+            <tr><td>0 ≤ t ≤ 2</td><td>1</td><td>t</td><td>S(2) = 2</td></tr>
+            <tr><td>2 &lt; t ≤ 5</td><td>3</td><td>2 + 3 × (t − 2)</td><td>S(5) = 11</td></tr>
+            <tr><td>5 &lt; t ≤ 10</td><td>6</td><td>11 + 6 × (t − 5)</td><td>S(10) = 41</td></tr>
+            <tr><td>t &gt; 10</td><td>10</td><td>41 + 10 × (t − 10)</td><td>S(12) = 61</td></tr>
+          </tbody></table>
+        </div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Kumulativa poängexempel">
+          <table><caption>Kontrollexempel inklusive deldagar</caption><thead><tr><th scope="col">Tardiness (dygn)</th><th scope="col">Beräkning</th><th scope="col">Poäng</th></tr></thead><tbody>
+            <tr><td>0 / 1 / 2</td><td>Ingen försening / 1 × 1 / 2 × 1</td><td>0 / 1 / 2</td></tr>
+            <tr><td>2,5</td><td>2 × 1 + 0,5 × 3</td><td>3,5</td></tr>
+            <tr><td>3</td><td>2 × 1 + 1 × 3</td><td>5</td></tr>
+            <tr><td>5</td><td>2 × 1 + 3 × 3</td><td>11</td></tr>
+            <tr><td>6</td><td>2 × 1 + 3 × 3 + 1 × 6</td><td>17</td></tr>
+            <tr><td>10</td><td>2 × 1 + 3 × 3 + 5 × 6</td><td>41</td></tr>
+            <tr><td>10,5</td><td>41 + 0,5 × 10</td><td>46</td></tr>
+            <tr><td>12</td><td>41 + 2 × 10</td><td>61</td></tr>
+          </tbody></table>
+        </div>
+        <p>Summera <strong>poängen per order</strong>, inte poängen på summan av alla förseningsdygn. Två order med 3 dygn var ger 5 + 5 = <strong>10 poäng</strong>, inte S(6) = 17. Alla order bidrar lika oavsett stycktid.</p>
+        <aside class="callout"><strong>Röd betyder inte automatiskt faktisk försening</strong><p>Leverans 20 oktober kl. 12:00 och färdigtid exakt då ger 0 tardiness, 0 poäng, 0 datummarginal och <strong>Röd</strong> status. Färdigtid samma dag kl. 18:00 ger fortfarande 0 datummarginal och 0 dygn i desktop-KPI:t, men <strong>0,25 dygn faktisk tardiness och 0,25 poäng</strong>. Färdigtid 19 oktober ger Gul; 18 oktober ger Grön. Förseningsstaket skyddar försening, inte all förlust av grön marginal.</p></aside>
+      </section>
+
+      <section id="exempel" aria-labelledby="exempel-rubrik">
+        <h2 id="exempel-rubrik">7. Konkreta scenarier och ett sammanhängande exempel</h2>
+        <p class="lead">Påhittade AO, datum och utfall illustrerar reglerna. De är inte resultat från en verklig arbetsbok eller löften om vilket förslag en körning kommer att hitta.</p>
+        <div class="grid">
+          <article class="card locked"><span class="tag">A · Vald horisont förändrar populationen</span><h3>Start 11:00, nu 08:00</h3><p>Med standard 4 h är ordern fryst. Med 2,5 h blir en annars kvalificerad Op10 flyttbar. Med 8 h är den åter fryst. Det är ursprungsstarten som jämförs; att kandidaten skulle börja vid en annan tid ändrar inte klassificeringen.</p></article>
+          <article class="card locked"><span class="tag">B · Noll är inte ”lås upp allt”</span><h3>Start 08:00 eller status 1</h3><p>Vid horisont 0 förblir en order med start vid nu fryst som redan påbörjad. En framtida operation med OpStatus 1, saknad varaktighet eller saknad leveransdag är också fortsatt fryst. Bara framtida tidslås tas bort.</p></article>
+          <article class="card repair"><span class="tag">C · Individuellt cap</span><h3>4 dygn sen får inte bli 7</h3><p>Leverans 20 okt. kl. 12:00; originalklart 24 okt. kl. 12:00: tardiness 4, poäng 8. Kandidatklart 27 okt. kl. 12:00: tardiness 7, poäng 23 och cap excess 3. Ordern låses till sin originalslot; övriga köer beräknas om.</p></article>
+          <article class="card accepted"><span class="tag">D · Alternativmaskin hjälper</span><h3>Fortfarande Röd men mindre sen</h3><p>På aktuell maskin prognostiseras 4 dygn försening. Ett listat alternativ ger 1 dygn, med samma eller bättre högre prioriterade planmål. Om hela planjämförelsen förbättras och slutkontrollen passerar kan flytten behållas. Röd slutstatus utesluter inte en värdefull förbättring.</p></article>
+          <article class="card"><span class="tag">E · Klustring är villkorad</span><h3>Samma artikel, 1 h ställtid</h3><p>En senare order med samma artikel som föregångaren kan få sin ställtid på 1 h sparad. Om den dras före EDD-huvudet måste dess leveransdatum ligga inom valt fönster för att besparingen ska räknas. Hela återstående kön prognostiseras; slutligt cap kan ändå kräva reparation. En order med ställtid 0 ger ingen klustervinst.</p></article>
+          <article class="card repair"><span class="tag">F · Otillräcklig kalendertäckning</span><h3>Ingen påhittad sluttid</h3><p>Kalendern slutar innan operationen ryms. Kandidaten blir oplanerad. Finns en användbar originalslot kan ordern återställas lokalt. Det är ett återbruk av originaldata, inte ett nytt bevis att slotten ryms i kalendern.</p></article>
+          <article class="card rejected"><span class="tag">G · Ingen reparerbar originalslot</span><h3>Kvarvarande fel ger full återgång</h3><p>En flyttbar order saknar en användbar originalsluttid för lokal återställning och kandidaten förblir oplanerad. Slutfiltret avvisar kandidaten och behåller originaltider/maskiner. Granska kandidatens fel och originalets databrister; återfallet gör inte saknade uppgifter kompletta.</p></article>
+          <article class="card"><span class="tag">H · Originalkrock och förlorad buffert</span><h3>Två olika varningssignaler</h3><p>Två frysta originalslotar överlappar på samma ProdGr: överlappet rapporteras, inte ”optimeras bort”. Separat kan en Grön order bli klar på leveransdagen och bli Röd med 0 tardiness. Det senare kan klara cap men måste bedömas som förlorad leveransbuffert.</p></article>
+        </div>
+        <h3 style="margin-top:24px">Steg för steg: tre order, en lokal reparation</h3>
+        <p>Anta nu <strong>8 oktober kl. 08:00</strong>, vald horisont <strong>2,5 h</strong> och klusterfönster <strong>30 dygn</strong>. Alla tre är Op10 med status 0, matchande operationsdata, leveransdag och kalender.</p>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Sammanhängande stegexempel">
+          <table><caption>Följ klassificering, kandidat, reparation och export</caption><thead><tr><th scope="col">Steg</th><th scope="col">Data / beslut</th><th scope="col">Konsekvens</th></tr></thead><tbody>
+            <tr><th scope="row">1. Klassificera</th><td>AO#1001 börjar ursprungligen 10:30; AO#1002 och #1003 börjar 11:00 respektive 13:00.</td><td>#1001 är fryst exakt på gränsen. #1002 och #1003 är flyttbara. #1001:s originalintervall reserveras.</td></tr>
+            <tr><th scope="row">2. Skapa kandidat</th><td>Planera #1002/#1003 runt #1001:s block, räkna nedströms ledtid och pröva tillgängliga alternativ.</td><td>Anta att #1002 får en säkrare marginal, men #1003 går från 4 till 4,5 dygn faktisk tardiness.</td></tr>
+            <tr><th scope="row">3. Kontrollera tak</th><td>#1003: originalpoäng S(4) = 8; kandidat S(4,5) = 9,5. Cap excess = 0,5.</td><td>Även om totalsiffrorna förbättras får #1003 inte bli mer sen. Kandidaten är ännu inte godkänd.</td></tr>
+            <tr><th scope="row">4. Reparera lokalt</th><td>Lås #1003 till sin originalstart/-slut/-maskin. Räkna om resten med det nya fasta blocket.</td><td>#1003 återfår 4 dygn tardiness och poäng 8. #1002:s första föreslagna tid är inte garanterad; den räknas om.</td></tr>
+            <tr><th scope="row">5. Kontrollera igen</th><td>Anta nu att #1002 fortfarande kan förbättras, alla flyttbara har sluttid och inget takbrott finns.</td><td>Behåll den reparerade planen: en lokalt låst order och en faktiskt ändrad order. Om nya brott uppstår upprepas reparationen.</td></tr>
+            <tr><th scope="row">6. Redovisa</th><td>Sammanfattningen visar 2,5 h, noll takbrott, en lokal låsning och faktiska ändringar. Radkommentaren för #1001 anger använd horisont.</td><td>Exportera med V6-markör. Vid olösta fel i steg 5 skulle hela originalplanen i stället behållas och kandidatens fel redovisas.</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <section id="parametrar" aria-labelledby="parametrar-rubrik">
+        <h2 id="parametrar-rubrik">8. Styrande parametrar – faktiska standardvärden</h2>
+        <p class="lead">Skilj användarval inför en körning från kodvärden och presentationsmått. Inställningar i den äldre SQL-tjänsten är inte V6-appens konfiguration.</p>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Parametrar och standardvärden">
+          <table><caption>V6-skrivbordsapp och motor</caption><thead><tr><th scope="col">Parameter</th><th scope="col">Standard</th><th scope="col">Betydelse</th><th scope="col">Ändringsväg</th></tr></thead><tbody>
+            <tr><th scope="row"><code>lock_horizon_hours</code> / <code>LOCK_HORIZON_HOURS</code></th><td>4 h</td><td>Körningslokal framtida fryshorisont, inkluderande gräns. Ändlig och ≥ 0.</td><td>UI-fält, CLI-flagga eller Python-argument. Sparas separat av UI.</td></tr>
+            <tr><th scope="row"><code>CLUSTER_WINDOW_DAYS</code> / <code>ClusterPolicy.window_days</code></th><td>30 dygn</td><td>Räckvidd från EDD-huvudets leveransdatum för att räkna besparing vid framdragen kandidat.</td><td>UI: Klustring → Fönster; Python: policy. Använd heltal ≥ 0. UI:s kod trunkerar decimaler och klampar negativa värden till 0; det är inte samma strikta validering som låshorisonten.</td></tr>
+            <tr><th scope="row">Individuellt förseningsstak</th><td>0 extra kalenderdygn</td><td>Ingen order får öka faktisk tardiness mot sitt original.</td><td>Fast regel; ingen UI-inställning för extra försening.</td></tr>
+            <tr><th scope="row"><code>TARDINESS_SCORE_TIERS</code></th><td>1 / 3 / 6 / 10 per dygn</td><td>Trösklar vid 2, 5 och 10 dygn; kumulativt och med proportionella deldagar.</td><td>Kodvärde, inte ett V6-UI-fält.</td></tr>
+            <tr><th scope="row"><code>GREEN_MARGIN_DAYS</code></th><td>1 dag</td><td>Datummarginal &gt; 1 Grön, = 1 Gul, &lt; 1 Röd.</td><td>Kodvärde, inte ett V6-UI-fält.</td></tr>
+            <tr><th scope="row"><code>DELAY_IN_WORKDAYS</code></th><td>False</td><td>Desktopens försenings-KPI räknas i kalenderdygn på datumnivå. Styr inte exakt cap/poäng.</td><td>Kodvärde. Arbetsdagsfunktionen finns i motorn men är inte aktiverad i standardappen.</td></tr>
+            <tr><th scope="row"><code>DELAY_CALENDAR</code></th><td><code>foretag</code></td><td>Förvald företagskalender om arbetsdags-KPI aktiveras; inaktiv vid standard False ovan.</td><td>Kodvärde, inte ett V6-UI-fält.</td></tr>
+            <tr><th scope="row"><code>NOW_Stockholm</code> / <code>TZ_NAME</code></th><td>Körstart / Europe/Stockholm</td><td>En fryslinje per körning. Lokal svensk tid utan tidszonsmarkör används för källjämförelser.</td><td>Automatiskt i UI/CLI; Python kan ange <code>now</code> för reproducerbara tester. Om tidszonsstödet saknas använder koden datorns lokala tid.</td></tr>
+            <tr><th scope="row"><code>MAX_ROUTING_PASSES</code></th><td>4 pass</td><td>Teknisk begränsning för alternativruttning.</td><td>Kodvärde.</td></tr>
+            <tr><th scope="row"><code>CAP_EPSILON_DAYS</code></th><td>1 × 10⁻⁹ dygn</td><td>Numerisk tolerans för cap; inte en verksamhetsbudget för försening.</td><td>Kodvärde.</td></tr>
+            <tr><th scope="row"><code>EPS_SECONDS</code></th><td>30 sekunder</td><td>Tolerans vid vissa intervall-/föregångarkontroller. Lokal placeringssökning är begränsad till 200 konfliktförsök.</td><td>Tekniska kodvärden, inte en garanti om absolut sekundprecision.</td></tr>
+            <tr><th scope="row"><code>PROTECT_MARGIN_DAYS</code> / <code>TARDINESS_BUDGET_PER_SETUP_HOUR</code></th><td>0 / 0,0</td><td>Äldre hjälpfunktioner/kompatibilitet finns kvar, men den äldre skadebudgeten styr inte V6:s aktiva sekvensering.</td><td>Ingen aktiv UI-budget. Ändra inte dessa i tron att V6:s individuella tak ändras.</td></tr>
+          </tbody></table>
+        </div>
+        <aside class="callout"><strong>Jämför en ändring i taget</strong><p>Använd samma underlag och, för kontrollerade Python-tester, samma <code>now</code>. Jämför horisont, flyttbara/ändrade order, planstatus, cap, poäng, färger, maskinbyten och lokala låsningar. Två vanliga UI-körningar har olika körstartstid, vilket i sig kan flytta fryslinjen.</p></aside>
+      </section>
+
+      <section id="kpi" aria-labelledby="kpi-rubrik">
+        <h2 id="kpi-rubrik">9. Så läser du KPI-korten och sammanfattningen</h2>
+        <div class="kpis">
+          <article class="card"><h3>Rader i underlaget</h3><p>Resultatpopulation efter deduplicering av baslinjens operationsnycklar, inte nödvändigtvis antal unika kundorder. Kortet visar även antal använda produktionsgrupper.</p></article>
+          <article class="card"><h3>Gröna / gula / röda</h3><p>Före → efter med <em>samma V6-statusregel</em>. Jeeves ursprungliga ColorName visas separat i sammanfattningen och bevaras i originalkolumnen.</p></article>
+          <article class="card"><h3>Förseningsdygn</h3><p>Datum-baserad faktisk senhet, inte antal röda. UI-kortet visar avrundade dygn. Poäng/cap kan skilja sig eftersom deldagar och klockslag räknas där.</p></article>
+          <article class="card"><h3>Omplanerade Op10</h3><p>Kortet använder <code>stats['changed']</code>: ändrad start eller maskin. Det är inte <code>movable</code>. Sammanfattningsraden ”Omplanerade (rörliga) Op10-rader” avser däremot flyttbar population, även efter lokal taklåsning.</p></article>
+          <article class="card"><h3>Frysta / alternativmaskin</h3><p>Startlåsta order visas i kortet för redan påbörjade. Horisontlås och övriga frysningsorsaker finns i sammanfattningen. Maskinbyteskortet visar accepterad omruttning, inte ett löfte om grön status.</p></article>
+          <article class="card"><h3>Sparad ställtid</h3><p>Summan av bokförd klusterbesparing i den valda planen. UI visar hela timmar; sammanfattningen har finare precision och visar antal besparingar samt framdragna order.</p></article>
+        </div>
+        <h3 style="margin-top:24px">Läs dessa sammanfattningsposter först</h3>
+        <ol>
+          <li><strong>Låshorisont (timmar), NOW_Stockholm och Motorversion.</strong> Bekräfta att resultatet avser rätt körning och vald policy.</li>
+          <li><strong>V6-planstatus.</strong> ”V6-förslag” respektive ”Originalplan återställd – kandidat underkänd” skiljer godkänt filter från återfall.</li>
+          <li><strong>Order över förseningsstaket och oplanerade order.</strong> Noll i slutplanen ska läsas tillsammans med planstatus och anmärkningar. Cap uppnått efter återfall betyder inte att kandidaten lyckades.</li>
+          <li><strong>Order låsta till originalslot för att skydda taket.</strong> Lokalt reparerade order kan vara kvar även när andra förbättringar behålls. Vid full återgång återställs det räknade utfallet för lokal reparation till noll.</li>
+          <li><strong>Avvisad kandidats fel.</strong> Vid återfall visar sammanfattningen kvarvarande takbrott, total takökning och oplanerade order i kandidaten <em>efter reparationsförsöken</em>, separat från slutplanens mått.</li>
+          <li><strong>Poäng före → efter och statusförändringar.</strong> Lägre poäng kan vara en förbättring även om en order fortfarande är Röd. Grön → Röd kan vara förlorad buffert utan cap-brott.</li>
+        </ol>
+        <aside class="callout warning"><strong>Om ändrade order = 0</strong><p>Det kan bero på frysning, samma valda tider/maskiner eller säkerhetsåterfall. Läs planstatus och Anmärkningar; tolka inte noll som ”bästa möjliga plan”. Filtren för ”mer försenade” och vissa UI-KPI bygger på datummarginal och är inte en ersättning för de exakta cap-kolumnerna.</p></aside>
+        <p class="note">Frysningsräknarna är inte alla oberoende kategorier: horisontflaggan kan räknas även när en annan databristsorsak också finns. Summan frysta bygger på klassificeringen, och behöver inte motsvara summan av varje detaljrad. <code>stats</code> innehåller också kandidatens takbrott/oplanerade före reparation, vilka inte alla har egna rader i Excel-sammanfattningen.</p>
+      </section>
+
+      <section id="export" aria-labelledby="export-rubrik">
+        <h2 id="export-rubrik">10. Resultatfiler och var horisonten är spårbar</h2>
+        <div class="grid">
+          <article class="card"><h3>Tidsstämplad Excel och CSV</h3><p>Filnamn bygger på indatafilens namn utan ändelse och körstartens tidsstämpel:</p><p><code>&lt;indatanamn&gt;_v6_resultat_&lt;yyyyMMddHHmmss&gt;.xlsx</code><br><code>&lt;indatanamn&gt;_v6_resultat_&lt;yyyyMMddHHmmss&gt;.csv</code></p><p>Exempel: <code>AI omplanering_v6_resultat_20261008153000.xlsx</code> och motsvarande CSV. Ingen separat sammanfattningsfil eller permanent loggfil skapas automatiskt.</p><p class="note">Tidsstämpeln har sekundupplösning. Normala körningar får olika namn, men koden garanterar inte unika namn om samma indata och utkatalog används flera gånger inom samma sekund.</p></article>
+          <article class="card"><h3>Innehåll och format</h3><p>Excel återger de fyra inlästa källtabellerna samt <code>tblAIAnglysisGetAoColorCodeList</code> och <code>AI_Sammanfattning</code>. Datum visas som <code>yyyy-mm-dd hh:mm</code>; resultatet färgas efter AI-status med filter och fryst rubrikrad.</p><p>CSV innehåller bara resultattabellen: semikolon, UTF-8 med BOM, CRLF och datum/tid med sekunder. Originalfält har det befintliga prefixet <code>Orginal_</code>; förslaget ligger i <code>AI_</code>-fält.</p><p class="note">Excel byggs som en ny arbetsbok från inlästa data, inte som en bit-för-bit-kopia. Ursprunglig formatering, extra flikar, formler och makron bevaras inte som originalarbetsbok; vissa källdatum normaliseras och ogiltiga kalenderrader filtreras.</p></article>
+        </div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Spårbarhet för körning och låshorisont">
+          <table><caption>Kontrollpunkter för spårbarhet</caption><thead><tr><th scope="col">Plats</th><th scope="col">Vad finns där?</th><th scope="col">Hur används det?</th></tr></thead><tbody>
+            <tr><th scope="row">Körlogg</th><td>Versionsrad, NOW_Stockholm, policy med faktisk horisont, klassificering och reparationshändelser.</td><td>Förklara beslut under denna körning. Python-resultatet har <code>log_lines</code>; loggen sparas inte automatiskt som separat textfil.</td></tr>
+            <tr><th scope="row">UI → Sammanfattning / Excel → AI_Sammanfattning</th><td>”Låshorisont (timmar)”, fryslinje, motorversion, klusterfönster och förklarad planstatus.</td><td>Primär dokumentation av de inställningar som faktiskt användes.</td></tr>
+            <tr><th scope="row">Radkommentar AI_Kommentar</th><td>Horisontlåsta rader anger den använda horisonten, exempelvis ”inom 2.5-timmars låshorisont”. Startlåsta rader har en separat förklaring.</td><td>Kan följas i UI, Excel och CSV. Det är inte en dedikerad horisontkolumn för alla rader.</td></tr>
+            <tr><th scope="row">Python stats</th><td><code>stats['lock_horizon_hours']</code>, <code>now_stockholm</code>, <code>run_ts</code>, <code>optimization_fallback</code> och kandidat-/slutmått.</td><td>Maskinläsbar körningsspårbarhet.</td></tr>
+            <tr><th scope="row">Separat V6-JSON</th><td>Senast sparade UI-värden, inklusive <code>lock_horizon_hours</code> och <code>window_days</code>.</td><td>Bekvämt för nästa start – inte bevis på policyn i en äldre export.</td></tr>
+            <tr><th scope="row">Poäng- och cap-kolumner</th><td><code>Orginal_OrdBerLevDat</code>, <code>Orginal_TardinessScore</code>, <code>AI_TardinessScore</code>, <code>AI_CapExcessDygn</code>.</td><td>Kontrollera leveransdatum, deldagspoäng och individuellt tak; originalkolumnernas tider kommer från motorns sammanförda källunderlag.</td></tr>
+          </tbody></table>
+        </div>
+        <aside class="callout"><strong>Inför överföring till produktion</strong><p>Spara Excel-resultatet tillsammans med rätt underlag. Bekräfta körningspolicy, granska datavarningar och originalöverlapp, jämför ändrade starttider/maskiner och säkra material/kapacitet i verksamheten. Exporten är ett förslag; V6-appens körning uppdaterar inte Jeeves eller SQL-tjänsten automatiskt.</p></aside>
+      </section>
+
+      <section id="ordlista" aria-labelledby="ordlista-rubrik">
+        <h2 id="ordlista-rubrik">11. Ordlista och källor</h2>
+        <div class="grid">
+          <article class="card"><h3>Begrepp i planeringen</h3><dl>
+            <dt>AO / AoNr</dt><dd>Tillverkningsorder. En resultatrad identifieras mer exakt av AoNr, AoPos och OpNr.</dd>
+            <dt>Op10</dt><dd>Den operation som motorn får flytta; övriga operationer lämnas oflyttade.</dd>
+            <dt>ProdGr / alternativrutt</dt><dd>Produktionsgrupp/maskin och ett alternativ från artikelns maskinlista.</dd>
+            <dt>EDD</dt><dd>Earliest Due Date: tidigast leveransdatum först, som grundordning för maskinkön.</dd>
+            <dt>Slot / fast block</dt><dd>Start–slut-intervall på en maskin. En fryst originalslot reserveras när tiderna finns.</dd>
+            <dt>Klustring</dt><dd>Artikelkoppling till föregångare på samma maskin som kan spara den följande orderns ställtid.</dd>
+            <dt>stycktid / stalltid</dt><dd>Total bearbetningstid respektive ställtid för operationen i timmar. Stycktid är inte en kvantitet eller kundvikt.</dd>
+          </dl></article>
+          <article class="card"><h3>Begrepp i kontrollen</h3><dl>
+            <dt>Låshorisont / fryslinje</dt><dd>Valda timmar från NOW_Stockholm; start till och med slutgränsen fryses. Noll tar endast bort framtidsfönstret.</dd>
+            <dt>TiSlutDat / nedströms ledtid</dt><dd>Orderns färdigtid och den fasta, icke-negativa tid som läggs efter nytt Op10-slut.</dd>
+            <dt>Tardiness / förseningspoäng</dt><dd>Faktisk tid efter leverans, med deldagar, respektive kumulativ progressiv kostnad per order.</dd>
+            <dt>Cap / lokal takreparation</dt><dd>Ingen extra tardiness mot originalet; berörda order återställs lokalt och resten planeras om.</dd>
+            <dt>Säkerhetsåterfall</dt><dd>Kandidaten underkändes efter reparation, så originaltider och originalmaskiner behålls. Inte ett bevis på fysisk genomförbarhet eller att bättre planer saknas.</dd>
+            <dt>Heuristik</dt><dd>Begränsad sökning med praktiska valregler, utan garanti om globalt bästa plan.</dd>
+          </dl></article>
+        </div>
+        <article class="card" style="margin-top:16px"><h3>Källor att läsa vidare i</h3><p>Denna sida beskriver V6.0 utifrån befintlig dokumentation och motorns/UI:ts faktiska implementation. Vid skillnad mellan ett önskat krav och kodbeteende ska begränsningen granskas, inte döljas.</p><ul>
+          <li><a href="README_v6.md">README_v6.md</a> – start, användning, Python/CLI och versionsavgränsning.</li>
+          <li><a href="instuktion_v6.md">instuktion_v6.md</a> – körningslokal horisont och V6:s ersättningar till V5-reglerna.</li>
+          <li><a href="instuktion_v5.md">instuktion_v5.md</a> – ärvda krav, målordning och dataregler; krav är inte i sig bevis på fullt kodstöd.</li>
+          <li><a href="omplanering_core_v6.py">omplanering_core_v6.py</a> – validering, klassificering, kalender, köprognos, ruttning, reparation, KPI och export.</li>
+          <li><a href="omplanering_app_v6.py">omplanering_app_v6.py</a> – UI, sparade inställningar, körningsögonblicksbild och filter.</li>
+          <li><a href="dokumentation_v5.html">dokumentation_v5.html</a> – tidigare flödesöversikt; V5:s fasta 4 h ersätts av valt värde i V6.</li>
+        </ul><p class="note">Länkarna är relativa till projektmappen och fungerar lokalt när filerna ligger kvar tillsammans. Själva HTML-sidan kräver inga externa typsnitt, bilder, skript eller nätverksresurser och kan skrivas ut från webbläsaren.</p></article>
+      </section>
+    </main>
+    <footer>AI Omplanering V6.0 · Fristående dokumentation · Valbar låshorisont, standard 4 h · SQL-tjänsten fortsatt V5 · <a href="#innehall">Till början av innehållet</a></footer>
+  </div>
+</body>
+</html>

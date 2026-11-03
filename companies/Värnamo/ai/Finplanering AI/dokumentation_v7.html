@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Helhetsguide för AI Omplanering V7: arbetsbok, planeringsregler, skrivbordsapp, SQL-tjänst och resultatgranskning.">
+  <title>AI Omplanering V7 – användarguide och regler</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f1f5f4;
+      --surface: #fff;
+      --ink: #192a32;
+      --muted: #52636b;
+      --line: #ccd7d8;
+      --teal: #08676d;
+      --teal-soft: #e4f2f1;
+      --blue: #315e81;
+      --blue-soft: #eaf1f7;
+      --green: #286844;
+      --green-soft: #e7f3e9;
+      --amber: #875b0c;
+      --amber-soft: #fff3d6;
+      --red: #a13c32;
+      --red-soft: #fae9e5;
+      --shadow: 0 3px 14px rgba(25, 42, 50, .07);
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: "Segoe UI", Tahoma, sans-serif;
+      --mono: Consolas, "Cascadia Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.6 var(--sans); }
+    a { color: var(--teal); text-underline-offset: 3px; overflow-wrap: anywhere; }
+    a:hover { color: var(--blue); }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+    .page { max-width: 1320px; margin: auto; padding: 22px clamp(16px, 3vw, 42px) 48px; }
+    .topline { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 13px; color: var(--muted); font: 12px var(--mono); text-transform: uppercase; }
+    header { padding: 28px 0 10px; }
+    h1 { margin: 0 0 12px; max-width: 900px; font: 700 clamp(34px, 4vw, 52px)/1.08 var(--serif); }
+    h2 { margin: 0 0 9px; font: 700 27px/1.2 var(--serif); }
+    h3 { margin: 0 0 7px; font-size: 17px; line-height: 1.3; }
+    p { margin: 0 0 12px; }
+    .intro { max-width: 930px; color: var(--muted); font-size: 18px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .chip { border: 1px solid var(--line); background: var(--surface); padding: 6px 10px; border-radius: 4px; font: 12px var(--mono); }
+    nav { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 13px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; box-shadow: var(--shadow); }
+    nav a { font-size: 13px; font-weight: 650; text-decoration: none; }
+    section { margin-top: 38px; scroll-margin-top: 16px; }
+    .lead { max-width: 940px; color: var(--muted); margin: 0 0 15px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .card { min-width: 0; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; box-shadow: var(--shadow); }
+    .card p:last-child { margin-bottom: 0; }
+    .card.teal { border-top: 4px solid var(--teal); }
+    .card.green { border-top: 4px solid var(--green); }
+    .card.amber { border-top: 4px solid var(--amber); }
+    .card.red { border-top: 4px solid var(--red); }
+    .tag { display: block; margin-bottom: 6px; color: var(--teal); font: 700 11px var(--mono); text-transform: uppercase; }
+    .callout { display: grid; grid-template-columns: 7px 1fr; margin: 16px 0; background: var(--teal-soft); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+    .callout::before { content: ""; background: var(--teal); }
+    .callout.warn::before { background: var(--amber); }
+    .callout > div { padding: 12px 15px; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); margin: 14px 0; }
+    table { width: 100%; min-width: 660px; border-collapse: collapse; }
+    th, td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    thead th { background: #e8efee; font-size: 12px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    code { font: 12px var(--mono); background: #edf2f1; padding: 2px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+    pre { overflow: auto; padding: 13px 15px; background: #172a32; color: #f2f6f5; border-radius: 4px; font: 13px/1.5 var(--mono); }
+    .diagram { overflow-x: auto; padding: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; box-shadow: var(--shadow); }
+    .diagram svg { display: block; width: 100%; min-width: 850px; height: auto; }
+    .lane { fill: #f7f9f8; stroke: #d5dfde; }
+    .node { fill: #fff; stroke: var(--teal); stroke-width: 2; }
+    .node-blue { fill: var(--blue-soft); stroke: var(--blue); }
+    .node-amber { fill: var(--amber-soft); stroke: var(--amber); }
+    .node-green { fill: var(--green-soft); stroke: var(--green); }
+    .node-red { fill: var(--red-soft); stroke: var(--red); }
+    .title { fill: var(--ink); font: 700 15px var(--sans); text-anchor: middle; }
+    .text { fill: #40545d; font: 12px var(--sans); text-anchor: middle; }
+    .edge { fill: none; stroke: #536d76; stroke-width: 2; marker-end: url(#arr); }
+    .edge-loop { fill: none; stroke: var(--amber); stroke-width: 2; marker-end: url(#arrAmber); }
+    .legend { display: flex; flex-wrap: wrap; gap: 9px 18px; padding: 12px 2px 0; color: var(--muted); font-size: 12px; }
+    .swatch { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 1px solid var(--line); vertical-align: -2px; }
+    .swatch.blue { background: var(--blue-soft); border-color: var(--blue); }
+    .swatch.amber { background: var(--amber-soft); border-color: var(--amber); }
+    .swatch.green { background: var(--green-soft); border-color: var(--green); }
+    .swatch.red { background: var(--red-soft); border-color: var(--red); }
+    ol { padding-left: 23px; }
+    li + li { margin-top: 7px; }
+    footer { margin-top: 42px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font: 12px var(--mono); }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .page { padding-inline: 14px; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print { body { background: #fff; } .page { max-width: none; padding: 0; } nav { display: none; } .card, .diagram, .callout { box-shadow: none; break-inside: avoid; } .diagram { overflow: visible; } .diagram svg { min-width: 0; } section { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topline"><span>AI Omplanering · Op10 · V7</span><span>Regler · exempel · SQL</span></div>
+    <header>
+      <h1>Planera med kundvärde och tydliga gränser</h1>
+      <p class="intro">V7 väger leveransnytta efter kundens vikt, använder en justerbar poäng för försening och sätter en absolut maxgräns per order. Gränsen avgör först vad som är tillåtet; poängen rangordnar sedan tillåtna planer.</p>
+      <div class="chips" aria-label="V7 standarder">
+        <span class="chip">Endast Op10 flyttas</span><span class="chip">4 h låshorisont</span>
+        <span class="chip">10 dagar generell maxförsening</span><span class="chip">Fast poäng per redigerbart intervall</span>
+        <span class="chip">Okänd kund: vikt 1</span><span class="chip">Desktop + SQL-tjänst V7</span>
+      </div>
+    </header>
+    <nav aria-label="Innehåll">
+      <a href="#kom-igang">Kom igång</a><a href="#oversikt">Översikt</a><a href="#kunddata">Kunddata</a><a href="#poang">Vikt och poäng</a>
+      <a href="#grans">Maxförsening</a><a href="#flode">Planeringsflöde</a><a href="#input">Parametrar</a>
+      <a href="#sql">SQL-tjänst</a><a href="#kontroll">Kontroller</a>
+    </nav>
+    <main>
+      <section id="kom-igang">
+        <h2>Kom igång – hela V7-lösningen</h2>
+        <p class="lead">V7 består av en skrivbordsapp för arbetsböcker, en gemensam planeringsmotor och en separat SQL-tjänst. Appen och tjänsten använder samma regler men har separata inställningar och driftsättning. V5/V6 och den befintliga SQL-tjänsten påverkas inte.</p>
+        <div class="grid">
+          <article class="card teal"><span class="tag">Skrivbordsapp</span><h3>Arbeta med en Excel-arbetsbok</h3>
+            <ol>
+              <li>Installera beroenden från projektmappen med <code>python -m pip install -r requirements.txt</code>.</li>
+              <li>Starta <code>python omplanering_app_v7.py</code>, välj arbetsbok och utkatalog.</li>
+              <li>Kontrollera kundmatchningen och körparametrarna innan du startar omplaneringen.</li>
+              <li>Granska körlogg, varningar, sammanfattning och resultat. Resultaten sparas som tidsstämplade Excel- och CSV-filer; arbetsboken skrivs inte över.</li>
+            </ol>
+          </article>
+          <article class="card"><span class="tag">Gemensam motor</span><h3>Vilka data och delar används?</h3>
+            <p>Arbetsboken behöver de fyra källflikarna för baslinje, operationer, arbetstidskalender och alternativa produktionsgrupper. `CustomerConfig` är valfri men krävs för kundspecifik vikt och maxförsening. Excel- och SQL-vägen använder samma V7-motor och planeringsregler.</p>
+            <p>Motorn planerar Op10, följer maskinernas kalendrar och låsningar, beräknar kundviktad prioritet samt validerar maxförsening. Den är heuristisk och ersätter inte verksamhetens slutkontroll.</p>
+          </article>
+        </div>
+        <div class="callout warn"><div><strong>Kontrollera ordernyckeln innan kundpolicy används</strong><code>CustomerConfig.OrderNumber</code> ska matcha baslinjens <code>OrderNr</code>. Omatchade order får standardvikt 1 och generell maxförsening. V7 använder inte AO-nummer som reservnyckel.</div></div>
+        <h3>SQL-tjänst – från test till schemaläggning</h3>
+        <ol>
+          <li>Granska och kör <code>service/sql/03_v7_customer_config_and_metrics.sql</code> mot avsedd databas.</li>
+          <li>Verifiera `dbo.CustomerConfig` och matchningen mellan `OrderNumber` och baslinjens `OrderNr`. Ställ in V7-policy i `service/config_v7.py` eller `service/config_v7.json`.</li>
+          <li>Kör <code>python service/run_service_v7.py --check</code> och därefter <code>python service/run_service_v7.py --dry-run --force</code>.</li>
+          <li>Granska resultat och varningar. Schemalägg V7 separat med <code>service/install_task_v7.ps1</code> först efter godkänd dry-run. SQL-tjänsten skriver inte till `CustomerConfig`.</li>
+        </ol>
+        <p>Testa ändringar med <code>python -m unittest test_omplanering_v7 -v</code>. Följ den fullständiga regel- och driftbeskrivningen i <code>instuktion_v7.md</code> och SQL-tjänstens instruktioner i <code>service/README_v7.md</code>.</p>
+      </section>
+      <section id="oversikt">
+        <h2>1. Så prioriterar V7</h2>
+        <p class="lead">En hög kundvikt gör kundens order mer värdefulla för optimeringen, men kunden får inte köpa sig förbi kapacitetsregler eller maxgränsen. Alla bedömningar sker per AO/position; om AO:n gäller flera kunder väljs högsta vikt och den striktaste kundgränsen.</p>
+        <div class="grid">
+          <article class="card green"><span class="tag">Först</span><h3>Följ hårda regler</h3><p>Maskin, kalender, låsning, status och nödvändiga data måste vara giltiga. Endast Op10 kan flyttas. Tider får inte hittas på när kalendern saknas.</p></article>
+          <article class="card amber"><span class="tag">Sedan</span><h3>Håll maxförseningen</h3><p>Varje order måste vara inom sitt tak. Om originalet redan överskrider taket får ordern behålla eller förbättra sin originalförsening, men inte bli ännu senare.</p></article>
+          <article class="card teal"><span class="tag">Därefter</span><h3>Maximera kundviktad grönnytta</h3><p>Gröna order bidrar med sin kundvikt. En grön Volvo-order med vikt 10 bidrar mer än en grön order med vikt 1.</p></article>
+          <article class="card"><span class="tag">Som nästa mål</span><h3>Minimera viktad förseningspoäng</h3><p>Hela förseningsdagar väljer ett konfigurerbart intervall med fast poäng. Resultatet multipliceras med kundvikten och summeras.</p></article>
+        </div>
+        <div class="callout warn"><div><strong>Kontrollera kundmatchningen före produktionskörning</strong>V7 använder kopplingen `OrderNumber` → `OrderNr`. Om nycklarna inte matchar får orderna standardvikt 1 och generell maxförsening. Kör inte kundviktad produktion innan matchningen har verifierats och rättats.</div></div>
+      </section>
+
+      <section id="kunddata">
+        <h2>2. Kundbladet `CustomerConfig`</h2>
+        <p class="lead">Lägg kundvärdena i samma Excelarbetsbok som planeringsunderlaget. Kolumnnamnen är exakta; `OrderNumber` måste motsvara baslinjens `OrderNr` efter normalisering av numeriska värden.</p>
+        <div class="table-wrap" role="region" aria-label="CustomerConfig-kolumner" tabindex="0">
+          <table><thead><tr><th>Kolumn</th><th>Exempel</th><th>Användning och validering</th></tr></thead><tbody>
+            <tr><td><code>OrderNumber</code></td><td>En identifierare per kundorder</td><td>Joinnyckel till baslinjens <code>OrderNr</code>. Saknad eller omatchad nyckel ger standardpolicy och varning.</td></tr>
+            <tr><td><code>Customer</code></td><td>127 eller Volvo</td><td>Kundidentitet för spårbarhet. Måste anges för att raden ska användas.</td></tr>
+            <tr><td><code>Vikt</code></td><td>10</td><td>Ändligt tal större än 0. Högre värde ger större prioritet.</td></tr>
+            <tr><td><code>MaxLate</code></td><td>5</td><td>Maximalt antal kalenderdagar efter leverans. Tomt värde använder globalgränsen.</td></tr>
+          </tbody></table>
+        </div>
+        <p><strong>Flera kunder på samma AO:</strong> alla matchade kundordrar visas i resultatet. AO:ns vikt blir högsta kundvikt och maxgränsen blir lägsta kundtak. Motstridiga dubbletter av samma `OrderNumber` stoppar körningen.</p>
+        <p>Okänd eller saknad kundkonfiguration ger vikt 1 och global maxförsening. Saknad `CustomerConfig`-flik är tillåten, men appen varnar om att standardpolicy används. SQL-tjänsten läser motsvarande `dbo.CustomerConfig`.</p>
+      </section>
+
+      <section id="poang">
+        <h2>3. Kundviktad poäng</h2>
+        <p class="lead">Poängtrappan består av redigerbara intervall med en fast poäng per order. Faktisk försening mäts i kalenderdagar och avrundas uppåt till hela dagar innan intervallet väljs; ändpunkterna ingår.</p>
+        <div class="table-wrap" role="region" aria-label="V7:s standardtrappa" tabindex="0">
+          <table><thead><tr><th>Från (dag)</th><th>Till (dag, ingår)</th><th>Fast poäng</th></tr></thead><tbody>
+            <tr><td>-99</td><td>0</td><td>1</td></tr><tr><td>1</td><td>2</td><td>2</td></tr>
+            <tr><td>3</td><td>4</td><td>4</td></tr><tr><td>5</td><td>7</td><td>9</td></tr>
+            <tr><td>8</td><td>9</td><td>10</td></tr><tr><td>10</td><td>Obegränsat</td><td>20</td></tr>
+          </tbody></table>
+        </div>
+        <pre>Orderpoäng = fast poäng för intervallet som innehåller avrundad tardiness
+Viktad orderpoäng = kundvikt × orderpoäng
+Total poäng = summan av viktad orderpoäng för planerade order</pre>
+        <div class="grid">
+          <article class="card"><span class="tag">Exempel A</span><h3>10 dagar försenad</h3><p>Volvo med vikt 10: <code>10 × 20 = 200</code> poäng. Scania med vikt 5: <code>5 × 20 = 100</code> poäng.</p></article>
+          <article class="card"><span class="tag">Exempel B</span><h3>Avrunda deldygn uppåt</h3><p>En försening på 1,2 dagar räknas som 2 hela dagar och får poängen 2. Intervallet väljs först; poängen multipliceras sedan med kundvikten.</p></article>
+        </div>
+        <p>I gränssnittet kan användaren lägga till eller ta bort intervall med knappar. Daggränserna måste vara heltal; intervalländpunkterna ingår. Raderna måste täcka dag 0 till obegränsat utan luckor eller överlapp. Lämna sista radens Till tomt för obegränsad övre gräns. Poäng måste vara ändliga och minst 0. Samma validerade trappa används under hela körningen och sparas separat i V7-inställningarna. Operationstid förändrar kapacitetsåtgång, inte kundvikten.</p>
+      </section>
+
+      <section id="grans">
+        <h2>4. Maxförsening är ett tillåtlighetskrav</h2>
+        <p class="lead">Generell standardgräns är 10 kalenderdagar efter leveransdatum. Ett ifyllt `MaxLate` i CustomerConfig ersätter den generella gränsen för kundordern. Om en AO omfattar flera kundordrar används det lägsta kundtaket.</p>
+        <div class="table-wrap" role="region" aria-label="Exempel på maxförseningsregeln" tabindex="0">
+          <table><thead><tr><th>Originalförsening</th><th>Tillämpligt max</th><th>Ny försening</th><th>Utfall</th></tr></thead><tbody>
+            <tr><td>2 dagar</td><td>5 dagar</td><td>4 dagar</td><td>Tillåten; inom kundtaket.</td></tr>
+            <tr><td>2 dagar</td><td>5 dagar</td><td>5,1 dagar</td><td>Otillåten; lokal reparation försöker återställa ordern.</td></tr>
+            <tr><td>12 dagar</td><td>5 dagar</td><td>12 dagar</td><td>Befintligt överskridande tolereras, rapporteras och får inte öka.</td></tr>
+            <tr><td>12 dagar</td><td>5 dagar</td><td>13 dagar</td><td>Otillåten försämring; ordern skyddas till originalslotten.</td></tr>
+          </tbody></table>
+        </div>
+        <p>Formellt är orderns effektiva tak det högsta av dess konfigurerade gräns och originalplanens faktiska försening. Det gör att en redan försenad order kan behålla sin ursprungsförsening, men aldrig skjutas längre än originalet om originalet redan ligger över gränsen.</p>
+        <div class="callout"><div><strong>Poäng kan inte köpa ett takbrott</strong>Först kontrolleras att planen är tillåten. Först därefter jämförs kundviktad grönnytta och poäng. Om lokala reparationer inte räcker återställs hela originalplanen; återfallet bevisar inte att en bättre plan saknas.</div></div>
+      </section>
+
+      <section id="flode">
+        <h2>5. Planeringsflöde</h2>
+        <p class="lead">Följ flödet från datavalidering till export. En kundpolicy påverkar målfunktionen men kan aldrig göra en fryst operation flyttbar.</p>
+        <div class="diagram" role="group" aria-label="V7 planeringsflöde">
+          <svg viewBox="0 0 1200 610" role="img" aria-labelledby="flow-title flow-desc">
+            <title id="flow-title">V7:s planering med kundvikt och maxförsening</title>
+            <desc id="flow-desc">Läs källor och CustomerConfig, validera och klassificera Op10, planera maskinköer, jämför kundviktad grönnytta och poäng inom maxförseningsgränser, reparera lokala överträdelser eller återställ hela planen, exportera och logga policy.</desc>
+            <defs><marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#536d76"/></marker><marker id="arrAmber" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#875b0c"/></marker></defs>
+            <rect class="lane" x="8" y="8" width="1184" height="135" rx="6"/><text x="24" y="30" fill="#52636b" font-size="12">A · INDATA OCH LÅSNING</text>
+            <rect class="lane" x="8" y="153" width="1184" height="155" rx="6"/><text x="24" y="175" fill="#52636b" font-size="12">B · MASKINPLANERING</text>
+            <rect class="lane" x="8" y="318" width="1184" height="145" rx="6"/><text x="24" y="340" fill="#52636b" font-size="12">C · KUNDMÅL OCH SÄKERHET</text>
+            <rect class="lane" x="8" y="473" width="1184" height="127" rx="6"/><text x="24" y="495" fill="#52636b" font-size="12">D · RESULTAT</text>
+            <path class="edge" d="M250 90H310M520 90H580M790 90H850M1010 132V205M850 250H790M580 250H520M310 250V390H390M680 390H760M950 390H1040V530H930M760 430V530H610"/>
+            <path class="edge-loop" d="M390 430H270V250H310M480 430V545H610"/>
+            <rect class="node" x="40" y="52" width="210" height="78" rx="7"/><text class="title" x="145" y="82">1 · Läs arbetsboken</text><text class="text" x="145" y="104">Baslinje + CustomerConfig</text>
+            <rect class="node" x="310" y="52" width="210" height="78" rx="7"/><text class="title" x="415" y="82">2 · Matcha order</text><text class="text" x="415" y="104">OrderNumber → OrderNr</text>
+            <rect class="node-blue" x="580" y="52" width="210" height="78" rx="7"/><text class="title" x="685" y="82">3 · Klassificera Op10</text><text class="text" x="685" y="104">Status, data, låshorisont</text>
+            <rect class="node-amber" x="850" y="52" width="210" height="78" rx="7"/><text class="title" x="955" y="82">4 · Validera policy</text><text class="text" x="955" y="104">Kundvikt + absolut max</text>
+            <rect class="node" x="850" y="205" width="210" height="86" rx="7"/><text class="title" x="955" y="237">5 · Planera maskinköer</text><text class="text" x="955" y="260">EDD · kalender · klustring</text><text class="text" x="955" y="278">alternativruttning</text>
+            <rect class="node" x="580" y="205" width="210" height="86" rx="7"/><text class="title" x="685" y="237">6 · Prognostisera</text><text class="text" x="685" y="260">Hela återstående kön</text><text class="text" x="685" y="278">kundviktad grön + poäng</text>
+            <rect class="node-amber" x="390" y="355" width="290" height="76" rx="7"/><text class="title" x="535" y="385">7 · Klarar alla maxgräns?</text><text class="text" x="535" y="408">Och är varje flyttbar order planerad?</text>
+            <rect class="node-green" x="760" y="355" width="190" height="76" rx="7"/><text class="title" x="855" y="385">8 · Godkänn</text><text class="text" x="855" y="408">Behåll säker plan</text>
+            <rect class="node-amber" x="80" y="355" width="190" height="76" rx="7"/><text class="title" x="175" y="385">9 · Reparera lokalt</text><text class="text" x="175" y="408">Lås berörd AO, planera om</text>
+            <rect class="node-red" x="390" y="505" width="220" height="72" rx="7"/><text class="title" x="500" y="535">10 · Säkerhetsåterfall</text><text class="text" x="500" y="557">Originalplan + felrapport</text>
+            <rect class="node-green" x="710" y="505" width="220" height="72" rx="7"/><text class="title" x="820" y="535">11 · Exportera</text><text class="text" x="820" y="557">Excel · CSV eller SQL</text>
+            <rect class="node" x="1040" y="505" width="130" height="72" rx="7"/><text class="title" x="1105" y="535">12 · Logga</text><text class="text" x="1105" y="557">Policy · vikt · tak</text>
+          </svg>
+          <div class="legend"><span><i class="swatch blue"></i>Frysning</span><span><i class="swatch amber"></i>Kontroll/reparation</span><span><i class="swatch green"></i>Godkänd plan</span><span><i class="swatch red"></i>Originalplan återställd</span></div>
+        </div>
+      </section>
+
+      <section id="input">
+        <h2>6. Parametrar i app och SQL</h2>
+        <div class="table-wrap" role="region" aria-label="V7-parametrar" tabindex="0">
+          <table><thead><tr><th>Parameter</th><th>Standard</th><th>Var ändras den?</th><th>Vad den styr</th></tr></thead><tbody>
+            <tr><td><code>Låshorisont</code></td><td>4 timmar</td><td>Desktopfält; även Python/CLI</td><td>Op10 exakt på gränsen är fryst. 0 stänger bara av framtida horisont.</td></tr>
+            <tr><td><code>Maxförsening</code></td><td>10 kalenderdagar</td><td>Desktopfält; `DEFAULT_MAX_TARDINESS_DAYS` i `service/config_v7.py`; `--max-late`</td><td>Generell per-ordergräns. Kundens ifyllda MaxLate ersätter den.</td></tr>
+            <tr><td>Poängtrappa</td><td>Sex intervall enligt tabellen</td><td>Redigerbara rader i desktopappen; `TARDINESS_SCORE_BANDS`; upprepad `--score-band`</td><td>Varje intervall ger en fast poäng. Hela förseningsdagar avrundas uppåt; intervallets heltalsgränser ingår.</td></tr>
+            <tr><td>Kundvikt</td><td>1 om order saknas i CustomerConfig</td><td>Kolumn `Vikt` per OrderNumber</td><td>Multiplicerar orderns poäng och bidrag till grönprioritet.</td></tr>
+            <tr><td>Kundtak</td><td>Globalt värde om MaxLate är tomt</td><td>Kolumn `MaxLate` per OrderNumber</td><td>Absolut max tardiness i kalenderdagar.</td></tr>
+            <tr><td>Klusterfönster</td><td>30 dagar</td><td>Desktopfält eller befintlig policy</td><td>Begränsar villkorad gruppering efter artikel.</td></tr>
+          </tbody></table>
+        </div>
+        <p>Desktopinställningar sparas separat i `.omplanering_ui_v7.json`. SQL-inställningar finns i `service/config_v7.py` och kan överskrivas med valfria nycklar i `service/config_v7.json`. Hela poängtrappan sparas i SQL-körloggen som `ScoreBandsJson`. Ändringar gäller endast V7.</p>
+      </section>
+
+      <section id="sql">
+        <h2>7. SQL-tjänst och T-SQL</h2>
+        <p class="lead">SQL-tjänsten V7 är separat från den befintliga tjänsten. Den läser `dbo.CustomerConfig`, räknar med samma V7-motor och skriver resultat/körpolicy till de befintliga historiktabellerna efter att V7-migrationen körts.</p>
+        <ol>
+          <li>Granska och kör <code>service/sql/03_v7_customer_config_and_metrics.sql</code> i rätt databas.</li>
+          <li>Verifiera att `dbo.CustomerConfig.OrderNumber` faktiskt matchar baslinjens `OrderNr`.</li>
+          <li>Installera beroenden från projektets requirements och kontrollera SQL-konfigurationen i `service/config_v7.py` eller `config_v7.json`.</li>
+          <li>Kör `python service/run_service_v7.py --check`, därefter `--dry-run --force`.</li>
+          <li>Installera en separat schemalagd V7-uppgift med `service/install_task_v7.ps1` först efter godkänd dry-run.</li>
+        </ol>
+        <p>Parametrar kan ändras per servicekörning:</p>
+        <pre>python service/run_service_v7.py --dry-run --force \
+          --max-late 10 --score-band=-99:0:1 --score-band=1:2:2 \
+          --score-band=3:4:4 --score-band=5:7:9 --score-band=8:9:10 \
+          --score-band=10:*:20</pre>
+        <p>T-SQL-migrationen skapar CustomerConfig om den saknas och lägger till de nya V7-policy-/kundkolumnerna i körlogg och resultat. Den lägger inte in kundrader; använd din kundkonfiguration som källa.</p>
+      </section>
+
+      <section id="kontroll">
+        <h2>8. Före produktionskörning</h2>
+        <div class="grid">
+          <article class="card teal"><span class="tag">Datakontroll</span><h3>Bekräfta joinen först</h3><p>Räkna antal CustomerConfig-rader som matchar baslinjens OrderNr. Kontrollera också dubbletter, tomma Customer/Vikt och MaxLate-värden utanför tillåtna intervall.</p></article>
+          <article class="card amber"><span class="tag">Policykontroll</span><h3>Bekräfta beslutspunkterna</h3><p>Granska global maxförsening, kundtak, vikt och poängintervall. Standardpoängen per intervall är en startpunkt; den ersätter inte beslut om affärsprioritet.</p></article>
+          <article class="card green"><span class="tag">Planvalidering</span><h3>Granska förslag och varningar</h3><p>Kontrollera maxgränsöverskridanden, lokala lås, säkerhetsåterfall, kalenderluckor och originalöverlapp. En godkänd heuristisk plan bevisar inte global optimalitet.</p></article>
+          <article class="card red"><span class="tag">Verksamhetskontroll</span><h3>Verifiera fysisk genomförbarhet</h3><p>Material, bemanning, underhåll och beroenden verifieras bara om de finns i underlaget. Bekräfta planen mot Jeeves och verklig produktion före frisläppning.</p></article>
+        </div>
+        <p>Testsvit: `python -m unittest test_omplanering_v7 -v`. Befintliga V5/V6-moduler och SQL-tjänst ska förbli oförändrade.</p>
+      </section>
+    </main>
+    <footer>AI Omplanering V7 · Op10 · kundviktad poäng och maxförsening · Offline-dokumentation · <a href="#oversikt">Till början</a></footer>
+  </div>
+</body>
+</html>

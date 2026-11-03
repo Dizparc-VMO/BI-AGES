@@ -1,0 +1,108 @@
+# OS and editors
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.swp
+*.swo
+*~
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# Visual Studio / .NET generated artifacts
+[Bb]in/
+[Oo]bj/
+TestResults/
+*.user
+*.suo
+*.sln.docstates
+*.nupkg
+*.snupkg
+*.pdb
+
+# SQL Server local builds, database files, backups, and deployment outputs
+*.dacpac
+*.bacpac
+*.mdf
+*.ndf
+*.ldf
+*.bak
+*.trn
+*.dbmdl
+*.jfm
+*.publish.xml
+
+# Power BI local caches and binary exports; retain PBIP, PBIR, BIM and TMDL source
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+**/.pbi/unappliedChanges.json
+*.pbix
+*.pbit
+*.abf
+
+# Fabric / notebooks: retain item definitions, .platform and notebook source
+.ipynb_checkpoints/
+.sparkStaging/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+*.egg-info/
+.coverage
+.coverage.*
+htmlcov/
+
+# Node.js: retain package manifests and lockfiles
+node_modules/
+.npm/
+.next/
+coverage/
+dist/
+build/
+*.tsbuildinfo
+
+# Local PowerShell analysis, transcripts and downloaded dependencies
+*.Transcript.txt
+*.transcript.txt
+.powershell/
+
+# Local configuration and sensitive artifacts (not a substitute for scanning)
+.env
+.env.*
+!.env.example
+!.env.template
+*.local.json
+*.local.yaml
+*.local.yml
+*.local.ps1
+*.local.config
+*.secrets.*
+secrets/
+.secrets/
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
+
+# Temporary/generated files and local data; never store customer extracts in Git
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+artifacts/
+local-data/

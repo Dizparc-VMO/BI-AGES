@@ -1,0 +1,26 @@
+# Starter only: all rules are commented until real GitHub teams are configured.
+# Replace placeholders, then uncomment rules. Teams must exist, be visible,
+# and have write access to this repository. Enable required owner review in rulesets.
+# Rules use case-sensitive paths; the LAST matching rule wins.
+# Broad ownership first, specialized ownership next; list multiple owners on
+# the same rule when both need to be requested (GitHub does not require all to approve).
+
+# * @<GITHUB_ORG>/<REPOSITORY_TEAM>
+# /.github/ @<GITHUB_ORG>/<REPOSITORY_TEAM>
+# /CLAUDE.md @<GITHUB_ORG>/<REPOSITORY_TEAM>
+# /config/ @<GITHUB_ORG>/<REPOSITORY_TEAM>
+# /automation/ @<GITHUB_ORG>/<REPOSITORY_TEAM>
+# /docs/ @<GITHUB_ORG>/<REPOSITORY_TEAM>
+# /shared/sql-server/ @<GITHUB_ORG>/<DATA_TEAM>
+# /shared/power-platform/ @<GITHUB_ORG>/<POWER_PLATFORM_TEAM>
+# /shared/fabric/ @<GITHUB_ORG>/<DATA_TEAM>
+# /shared/powerbi/ @<GITHUB_ORG>/<BI_TEAM>
+# /shared/ai/ @<GITHUB_ORG>/<AI_TEAM>
+# /companies/*/sql-server/ @<GITHUB_ORG>/<DATA_TEAM>
+# /companies/*/power-platform/ @<GITHUB_ORG>/<POWER_PLATFORM_TEAM>
+# /companies/*/fabric/ @<GITHUB_ORG>/<DATA_TEAM>
+# /companies/*/powerbi/ @<GITHUB_ORG>/<BI_TEAM>
+# /companies/*/ai/ @<GITHUB_ORG>/<AI_TEAM>
+
+# Add actual company-owner rules after renaming examples. A broad company rule
+# placed last replaces technology ownership: include the needed teams explicitly.

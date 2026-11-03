@@ -1,0 +1,23 @@
+# AI Omplanering – SQL-tjänst
+#
+# Installerar allt som behövs på servern: motorn plus databasdrivrutinen.
+#
+#   pip install -r service\requirements.txt
+#
+# Kräver Python 3.9 eller senare. Testat på 3.13.11.
+
+# Motorn och Excel-lagret (pandas, openpyxl, tzdata).
+-r ../requirements.txt
+
+# ODBC-brygga mot SQL Server.
+#
+# 5.1 är lägsta version med hjul för Python 3.12+; 4.x går inte att bygga
+# där. fast_executemany kräver dessutom 4.0.19 eller senare.
+#
+# Modulen behöver en ODBC-drivrutin installerad i Windows. Den gamla
+# "SQL Server" fungerar, men "ODBC Driver 17 for SQL Server" eller senare
+# är snabbare och krävs för fast_executemany – sätt då ODBC_DRIVER i
+# config.json. Kontrollera vad som finns med:
+#
+#     python -c "import pyodbc; print(pyodbc.drivers())"
+pyodbc>=5.1

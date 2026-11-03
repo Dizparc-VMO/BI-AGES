@@ -1,0 +1,56 @@
+name: Build AI Omplanering V8 installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: Installer version, for example 8.0.1
+        required: true
+        default: "8.0.0"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-2022
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Install application and build dependencies
+        working-directory: companies/Värnamo/ai/Finplanering AI
+        run: python -m pip install -r requirements-build-v8.txt
+
+      - name: Run V8 tests
+        working-directory: companies/Värnamo/ai/Finplanering AI
+        run: python -m unittest test_omplanering_v5 test_omplanering_v6 test_omplanering_v7 test_omplanering_v8 -v
+
+      - name: Build standalone application
+        working-directory: companies/Värnamo/ai/Finplanering AI
+        run: pyinstaller --noconfirm --clean packaging/finplanering_v8.spec
+
+      - name: Build Windows installer
+        working-directory: companies/Värnamo/ai/Finplanering AI
+        env:
+          APP_VERSION: ${{ inputs.app_version }}
+        shell: pwsh
+        run: iscc packaging/finplanering_v8.iss
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Omplanering-V8-Setup-${{ inputs.app_version }}
+          path: companies/Värnamo/ai/Finplanering AI/dist/AI-Omplanering-V8-Setup.exe
+          if-no-files-found: error
+          retention-days: 30

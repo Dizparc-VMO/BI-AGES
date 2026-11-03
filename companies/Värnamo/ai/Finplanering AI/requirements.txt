@@ -1,0 +1,31 @@
+# AI Omplanering – beräkningsmotor och skrivbordsapp
+#
+#   pip install -r requirements.txt
+#
+# Kör tjänsten mot SQL Server? Använd service\requirements.txt i stället –
+# den tar med den här filen plus databasdrivrutinen.
+#
+# Kräver Python 3.9 eller senare (zoneinfo). Testat på 3.13.11.
+# tkinter används av skrivbordsappen men installeras inte via pip – det
+# ingår i Python för Windows.
+
+# Läser och skriver arbetsboken, all tabellbearbetning.
+# lineterminator i to_csv kräver 1.5+, men 2.0 är den version logiken
+# är skriven och testad mot.
+pandas>=2.0
+
+# Skriver resultatarbetsboken: radfärgning, frysta rubriker, autofilter.
+# Behövs även för pandas .read_excel på .xlsx.
+openpyxl>=3.1
+
+# KRÄVS PÅ WINDOWS. Windows har ingen systemtidszonsdatabas, så
+# zoneinfo.TZPATH är tom och ZoneInfo("Europe/Stockholm") faller tillbaka
+# på det här paketet. Utan det kastar frysningsregeln (instruktion 2.1)
+# ZoneInfoNotFoundError direkt vid start.
+tzdata>=2024.1
+
+# --- Versioner som lösningen är verifierad mot -----------------------------
+# pandas    3.0.0
+# openpyxl  3.1.5
+# tzdata    2025.3
+# numpy     2.4.2   (följer med pandas)

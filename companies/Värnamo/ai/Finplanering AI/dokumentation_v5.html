@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Omplanering V5 – så fungerar flödet</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f3f6f5;
+      --surface: #fff;
+      --ink: #17262d;
+      --muted: #54666d;
+      --line: #c9d4d5;
+      --teal: #0d6670;
+      --teal-soft: #e4f2f2;
+      --blue: #37658c;
+      --blue-soft: #eaf1f8;
+      --green: #287747;
+      --green-soft: #e7f3e8;
+      --amber: #946414;
+      --amber-soft: #fff3d6;
+      --red: #a33f35;
+      --red-soft: #fbe9e5;
+      --shadow: 0 2px 10px rgba(23, 38, 45, .07);
+      --sans: "Segoe UI", Tahoma, Arial, sans-serif;
+      --mono: Consolas, "Cascadia Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 15px/1.55 var(--sans);
+    }
+    a { color: var(--teal); }
+    .page { max-width: 1480px; margin: auto; padding: 24px clamp(16px, 3vw, 42px) 56px; }
+    .topline {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 16px;
+      color: var(--muted); font: 12px var(--mono); text-transform: uppercase;
+    }
+    h1 { margin: 22px 0 8px; font-size: clamp(27px, 3vw, 40px); line-height: 1.12; }
+    .intro { max-width: 850px; margin: 0; color: var(--muted); font-size: 17px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 24px; }
+    .chip {
+      border: 1px solid var(--line); background: var(--surface); border-radius: 4px;
+      padding: 6px 10px; font: 12px var(--mono); color: var(--ink);
+    }
+    nav {
+      display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 12px 14px;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 5px;
+      box-shadow: var(--shadow); margin-bottom: 24px;
+    }
+    nav a { text-decoration: none; font-size: 13px; font-weight: 600; }
+    section { margin-top: 36px; scroll-margin-top: 14px; }
+    h2 { margin: 0 0 8px; font-size: 23px; line-height: 1.2; }
+    h3 { margin: 0 0 6px; font-size: 16px; }
+    .section-lead { margin: 0 0 16px; color: var(--muted); max-width: 900px; }
+    .map-wrap {
+      overflow-x: auto; background: var(--surface); border: 1px solid var(--line);
+      border-radius: 5px; box-shadow: var(--shadow); padding: 12px;
+    }
+    .map-wrap svg { display: block; width: 100%; min-width: 920px; height: auto; }
+    .map-wrap .lane { fill: #f8faf9; stroke: #dce4e3; stroke-width: 1; }
+    .map-wrap .lane-label { fill: #64777d; font: 600 12px var(--mono); letter-spacing: .6px; }
+    .map-wrap .node { stroke-width: 2; rx: 8; }
+    .map-wrap .node-input { fill: var(--teal-soft); stroke: var(--teal); }
+    .map-wrap .node-lock { fill: var(--blue-soft); stroke: var(--blue); }
+    .map-wrap .node-work { fill: #fff; stroke: var(--teal); }
+    .map-wrap .node-check { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 2; }
+    .map-wrap .node-repair { fill: var(--amber-soft); stroke: var(--amber); }
+    .map-wrap .node-good { fill: var(--green-soft); stroke: var(--green); }
+    .map-wrap .node-fallback { fill: var(--red-soft); stroke: var(--red); }
+    .map-wrap .node-title { fill: var(--ink); font: 700 15px var(--sans); text-anchor: middle; }
+    .map-wrap .node-text { fill: #344a52; font: 13px var(--sans); text-anchor: middle; }
+    .map-wrap .decision-text { fill: var(--ink); font: 700 14px var(--sans); text-anchor: middle; }
+    .map-wrap .edge { fill: none; stroke: #587079; stroke-width: 2.3; marker-end: url(#arrow); }
+    .map-wrap .edge-loop { fill: none; stroke: var(--teal); stroke-width: 2.3; marker-end: url(#arrowTeal); }
+    .map-wrap .edge-fail { fill: none; stroke: var(--red); stroke-width: 2.3; marker-end: url(#arrowRed); }
+    .map-wrap .edge-label { fill: #52666c; font: 700 12px var(--mono); }
+    .map-wrap .edge-label-no { fill: var(--red); font: 700 12px var(--mono); }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; padding: 12px 4px 0; color: var(--muted); font-size: 12px; }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { display: inline-block; width: 13px; height: 13px; border: 1px solid var(--line); border-radius: 2px; }
+    .swatch.lock { background: var(--blue-soft); border-color: var(--blue); }
+    .swatch.check { background: var(--amber-soft); border-color: var(--amber); }
+    .swatch.ok { background: var(--green-soft); border-color: var(--green); }
+    .swatch.fallback { background: var(--red-soft); border-color: var(--red); }
+    .callout {
+      display: grid; grid-template-columns: 8px 1fr; gap: 12px; margin: 16px 0 0;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 5px;
+      overflow: hidden; box-shadow: var(--shadow);
+    }
+    .callout::before { content: ""; background: var(--teal); }
+    .callout > div { padding: 12px 14px 13px 0; }
+    .callout strong { display: block; margin-bottom: 3px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .case {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 5px;
+      box-shadow: var(--shadow); padding: 15px 17px;
+    }
+    .case .tag {
+      display: inline-block; margin-bottom: 8px; color: var(--teal);
+      font: 700 11px var(--mono); text-transform: uppercase;
+    }
+    .case p { margin: 5px 0 0; color: var(--muted); }
+    .case.lock { border-top: 4px solid var(--blue); }
+    .case.repair { border-top: 4px solid var(--amber); }
+    .case.accept { border-top: 4px solid var(--green); }
+    .case.reject { border-top: 4px solid var(--red); }
+    .case.data { border-top: 4px solid #637b83; }
+    .math { font: 13px var(--mono); color: var(--ink); background: #f1f5f4; border-radius: 3px; padding: 2px 5px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+    .kpi { padding: 13px 14px; background: var(--surface); }
+    .kpi b { display: block; font-size: 17px; }
+    .kpi small { display: block; margin-top: 4px; color: var(--muted); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    th, td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { background: #eaf0ef; font-size: 12px; color: #344a52; }
+    tr:last-child td { border-bottom: 0; }
+    code { font: 12px var(--mono); overflow-wrap: anywhere; }
+    .note { color: var(--muted); font-size: 13px; }
+    footer { border-top: 1px solid var(--line); margin-top: 42px; padding-top: 14px; color: var(--muted); font: 12px var(--mono); }
+    @media (max-width: 760px) {
+      .page { padding-inline: 14px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media print {
+      body { background: #fff; }
+      .page { max-width: none; padding: 0; }
+      nav { display: none; }
+      .map-wrap, .case, .callout { box-shadow: none; break-inside: avoid; }
+      .map-wrap { overflow: visible; }
+      .map-wrap svg { min-width: 0; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topline">
+      <span>AI Omplanering · Op10 · V5</span>
+      <span>Flöde / beslut / exempel</span>
+    </div>
+    <header>
+      <h1>Så fungerar V5</h1>
+      <p class="intro">V5 försöker förbättra planen utan att göra en enskild order mer försenad än i originalet. Om en order riskerar att bli sämre låses just den ordern tillbaka till sin originalslot, och resten av kön planeras om.</p>
+      <div class="chips" aria-label="Grundregler">
+        <span class="chip">Endast Op10 flyttas</span>
+        <span class="chip">4 h låshorisont</span>
+        <span class="chip">Ingen extra tardiness per order</span>
+        <span class="chip">Alla order har samma affärsvikt</span>
+      </div>
+    </header>
+
+    <nav aria-label="Innehåll">
+      <a href="#flode">Flödesschema</a>
+      <a href="#steg-exempel">Steg-för-steg-exempel</a>
+      <a href="#fall">Exempel och villkor</a>
+      <a href="#parametrar">Styrande parametrar</a>
+      <a href="#utfall">Läs KPI-korten</a>
+      <a href="#ordlista">Begrepp</a>
+    </nav>
+
+    <main>
+      <section id="flode">
+        <h2>1. Flödesschema</h2>
+        <p class="section-lead">Följ pilarna från vänster till höger. På mobil kan diagrammet rullas i sidled. Blå rutor är låsta/fasta tider, gula rutor är beslut eller reparation, grönt är accepterat och rött är avvisat återfall.</p>
+        <div class="map-wrap" role="group" aria-label="Visio-liknande flödesschema för V5">
+          <svg viewBox="0 0 1500 850" role="img" aria-labelledby="map-title map-desc">
+            <title id="map-title">V5:s planeringsflöde för Op10</title>
+            <desc id="map-desc">Validering, frysning, sekvensering, cap-kontroll, lokal reparation och vid behov återgång till originalplanen.</desc>
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#587079"/></marker>
+              <marker id="arrowTeal" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0d6670"/></marker>
+              <marker id="arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a33f35"/></marker>
+            </defs>
+
+            <!-- Swimlanes -->
+            <rect class="lane" x="8" y="18" width="1484" height="205" rx="7"/>
+            <rect class="lane" x="8" y="232" width="1484" height="205" rx="7"/>
+            <rect class="lane" x="8" y="446" width="1484" height="210" rx="7"/>
+            <rect class="lane" x="8" y="665" width="1484" height="174" rx="7"/>
+            <text class="lane-label" x="24" y="40">A · INDATA OCH FRYSNING</text>
+            <text class="lane-label" x="24" y="254">B · MASKINPLANERING</text>
+            <text class="lane-label" x="24" y="468">C · SÄKERHETSKONTROLL</text>
+            <text class="lane-label" x="24" y="687">D · RESULTAT</text>
+
+            <!-- Connectors behind nodes -->
+            <path class="edge" d="M275 127 H330"/>
+            <path class="edge" d="M555 127 H615"/>
+            <path class="edge" d="M810 127 H905"/>
+            <path class="edge" d="M710 202 V275"/>
+            <text class="edge-label-no" x="722" y="244">NEJ</text>
+            <path class="edge" d="M1000 202 V275"/>
+            <text class="edge-label" x="1012" y="244">JA · ≤ 4 h</text>
+            <path class="edge" d="M1100 127 H1170 V275"/>
+            <text class="edge-label" x="1113" y="113">NEJ · kan planeras</text>
+            <path class="edge" d="M835 330 H1025 V345 H1120"/>
+            <path class="edge" d="M1125 330 H1140 V345 H1120"/>
+            <path class="edge" d="M1280 405 V550 H970"/>
+            <path class="edge" d="M970 550 H1190 V710"/>
+            <text class="edge-label" x="987" y="537">JA</text>
+            <path class="edge-fail" d="M770 550 H700"/>
+            <text class="edge-label-no" x="730" y="537">NEJ</text>
+            <path class="edge-loop" d="M520 485 V455 H1125 V405"/>
+            <text class="edge-label" x="760" y="450">Replanera berörda maskiner och kontrollera igen</text>
+            <path class="edge-fail" d="M545 615 V710"/>
+            <text class="edge-label-no" x="560" y="660">Ingen säker reparation</text>
+
+            <!-- Input nodes -->
+            <rect class="node node-input" x="75" y="78" width="200" height="100"/>
+            <text class="node-title" x="175" y="108">1 · Läs arbetsboken</text>
+            <text class="node-text" x="175" y="132"><tspan x="175">Baslinje · operationer</tspan><tspan x="175" dy="19">kalender · alternativmaskiner</tspan></text>
+
+            <rect class="node node-input" x="330" y="78" width="225" height="100"/>
+            <text class="node-title" x="442" y="108">2 · Validera data</text>
+            <text class="node-text" x="442" y="132"><tspan x="442">Datum · tider · ProdGr</tspan><tspan x="442" dy="19">kalender · nycklar</tspan></text>
+
+            <polygon class="node node-check" points="710,50 810,127 710,204 610,127"/>
+            <text class="decision-text" x="710" y="116"><tspan x="710">3 · Op10 valbar?</tspan><tspan x="710" dy="20">Status 0 + data finns</tspan></text>
+
+            <polygon class="node node-check" points="1000,50 1100,127 1000,204 900,127"/>
+            <text class="decision-text" x="1000" y="116"><tspan x="1000">4 · Start inom</tspan><tspan x="1000" dy="20">4 timmar?</tspan></text>
+
+            <rect class="node node-lock" x="565" y="275" width="270" height="110"/>
+            <text class="node-title" x="700" y="307">5 · Fryst av grundregel</text>
+            <text class="node-text" x="700" y="331"><tspan x="700">Ej Op10, status ≠ 0, saknad data</tspan><tspan x="700" dy="19">eller redan påbörjad</tspan></text>
+
+            <rect class="node node-lock" x="875" y="275" width="250" height="110"/>
+            <text class="node-title" x="1000" y="307">6 · Låst i 4 h-fönstret</text>
+            <text class="node-text" x="1000" y="331"><tspan x="1000">Behåll start, slut och maskin</tspan><tspan x="1000" dy="19">lägg in som fast kapacitet</tspan></text>
+
+            <!-- Scheduling and control -->
+            <rect class="node node-work" x="1120" y="275" width="320" height="130"/>
+            <text class="node-title" x="1280" y="307">7 · Skapa maskinkö</text>
+            <text class="node-text" x="1280" y="333"><tspan x="1280">EDD + kapacitet + villkorad klustring</tspan><tspan x="1280" dy="19">prova godkända alternativa maskiner</tspan><tspan x="1280" dy="19">prognostisera hela återstående kön</tspan></text>
+
+            <polygon class="node node-check" points="870,475 970,550 870,625 770,550"/>
+            <text class="decision-text" x="870" y="531"><tspan x="870">8 · Komplett och</tspan><tspan x="870" dy="19">cap-säker plan?</tspan></text>
+
+            <rect class="node node-repair" x="390" y="485" width="310" height="130"/>
+            <text class="node-title" x="545" y="516">9 · Lokal reparation</text>
+            <text class="node-text" x="545" y="541"><tspan x="545">Lås bara ordern som blev sämre</tspan><tspan x="545" dy="19">till originaltid och originalmaskin</tspan><tspan x="545" dy="19">schemalägg om övriga · upprepa</tspan></text>
+
+            <rect class="node node-good" x="1040" y="710" width="300" height="95"/>
+            <text class="node-title" x="1190" y="744">10 · Plan godkänd</text>
+            <text class="node-text" x="1190" y="769"><tspan x="1190">0 takbrott · alla kvalificerade</tspan><tspan x="1190" dy="18">order planerade</tspan></text>
+
+            <rect class="node node-fallback" x="375" y="710" width="300" height="95"/>
+            <text class="node-title" x="525" y="744">11 · Säkerhetsåterfall</text>
+            <text class="node-text" x="525" y="769"><tspan x="525">Om lokala reparationer inte räcker:</tspan><tspan x="525" dy="18">behåll hela originalplanen</tspan></text>
+
+            <rect class="node node-input" x="735" y="710" width="260" height="95"/>
+            <text class="node-title" x="865" y="744">12 · Exportera</text>
+            <text class="node-text" x="865" y="769"><tspan x="865">Excel + CSV + sammanfattning</tspan><tspan x="865" dy="18">visa ändringar och varningar</tspan></text>
+            <path class="edge" d="M1040 757 H995"/>
+            <path class="edge" d="M675 757 H735"/>
+          </svg>
+          <div class="legend" aria-label="Legend">
+            <span><i class="swatch lock"></i>Fryst tid/maskin</span>
+            <span><i class="swatch check"></i>Beslut eller reparation</span>
+            <span><i class="swatch ok"></i>Godkänd plan</span>
+            <span><i class="swatch fallback"></i>Originalplan behålls</span>
+          </div>
+        </div>
+        <h3>Detaljer för varje ruta</h3>
+        <p class="section-lead">Numren här motsvarar numren i diagrammet. Läs särskilt skillnaden mellan fryst av grundregel (5) och låst på grund av fyratimmarsfönstret (6).</p>
+        <div class="grid-2">
+          <article class="case">
+            <span class="tag">Ruta 1 · Läs arbetsboken</span>
+            <h3>Samla planeringsunderlaget</h3>
+            <p>V5 läser baslinjen, samtliga operationer, arbetstidskalendern och listan över godkända alternativa maskiner. Baslinjen är jämförelsen för leveransdatum och ursprungliga sluttider. Källflikarna ska finnas kvar oförändrade i resultatfilen.</p>
+          </article>
+          <article class="case">
+            <span class="tag">Ruta 2 · Validera data</span>
+            <h3>Normalisera innan schemaläggning</h3>
+            <p>Datum kan vara Excel-serienummer eller riktiga datum/tider. `ProdGr` normaliseras så att exempelvis 10122 och 10122.0 matchar. V5 kontrollerar Op10-tid och kalendertäckning. Saknad varaktighet eller kalender får inte ersättas med en gissning.</p>
+          </article>
+          <article class="case">
+            <span class="tag">Ruta 3 · Op10 valbar?</span>
+            <h3>Kontrollera om ordern får flyttas</h3>
+            <p>Ja kräver att AO finns i både baslinje och operationsdata, `OpNr = 10`, `OpStatus = 0`, samt att leveransdatum, ursprunglig start, positiv varaktighet och användbar kalender finns. Nej leder till ruta 5: raden ändras inte. Endast Op10 får omplaneras.</p>
+          </article>
+          <article class="case lock">
+            <span class="tag">Ruta 4 · Start inom 4 timmar?</span>
+            <h3>Räkna från `NOW_Stockholm`</h3>
+            <p>Om originalstarten redan har passerat är ordern påbörjad. Om den ligger efter nu men högst fyra timmar framåt är den inom låsfönstret. Båda fallen går till ruta 6 och behåller tid och maskin. Först en valbar Op10 som startar senare än låsfönstret går vidare till maskinkön.</p>
+          </article>
+          <article class="case lock">
+            <span class="tag">Ruta 5 · Fryst av grundregel</span>
+            <h3>Ändra inte skyddade rader</h3>
+            <p>Hit går rader som inte är Op10, har annan operationsstatus än 0 eller saknar obligatoriska uppgifter. De får inte byta maskin eller starttid. En fryst Op10 med giltigt intervall ligger kvar som fast block på sin ursprungliga maskin.</p>
+          </article>
+          <article class="case lock">
+            <span class="tag">Ruta 6 · Låst i 4 h-fönstret</span>
+            <h3>Reservera kapaciteten</h3>
+            <p>V5 behåller ursprunglig start, sluttid och `ProdGr`. Intervallet läggs in i maskinens fasta beläggning, så en annan order inte planeras ovanpå det. Fyratimmarslåset är ett fast V5-värde, inte samma sak som 30-dagars klusterfönster.</p>
+          </article>
+          <article class="case">
+            <span class="tag">Ruta 7 · Skapa maskinkö</span>
+            <h3>Planera runt fasta tider</h3>
+            <p>Valbara order sorteras i grunden efter EDD. Prognosen testar vad ett val gör med hela den återstående kön, inklusive maskinkalender, ställtid och godkända alternativa maskiner. Klusterfönstret på 30 dagar avgör när en ställtidssparande gruppering får räknas; det är inte en allmän regel om att order utanför fönstret aldrig kan omordnas.</p>
+          </article>
+          <article class="case">
+            <span class="tag">Ruta 8 · Komplett och cap-säker?</span>
+            <h3>Kontrollera varje kvalificerad order</h3>
+            <p>Planen måste ha en sluttid för varje kvalificerad order och ingen order får få fler faktiska förseningsdagar än i baslinjen. Cap beräknas per order: <span class="math">max(0, ny tardiness − original tardiness)</span>. Färgstatus är separat: en order kan vara Röd på leveransdagen och ändå ha 0 dagars faktisk tardiness.</p>
+          </article>
+          <article class="case repair">
+            <span class="tag">Ruta 9 · Lokal reparation</span>
+            <h3>Lås bara ordern som bryter mot taket</h3>
+            <p>V5 tar ut den försämrade eller oplanerade ordern ur den rörliga kön, återställer dess ursprungliga tid och maskin och lägger tiden som fast block. Därefter räknas återstående order om på berörda maskiner. Steget upprepas. Så kan andra säkra förbättringar vara kvar.</p>
+          </article>
+          <article class="case accept">
+            <span class="tag">Ruta 10 · Plan godkänd</span>
+            <h3>Behåll de säkra ändringarna</h3>
+            <p>Om den reparerade planen är komplett och har 0 takbrott går den vidare. Resultatet visar vilka order faktiskt ändrats, vilka som låstes lokalt och hur gröna/gula/röda order samt förseningsdygn förändrats.</p>
+          </article>
+          <article class="case reject">
+            <span class="tag">Ruta 11 · Säkerhetsåterfall</span>
+            <h3>Avbryt kandidaten om reparation inte räcker</h3>
+            <p>Om cap-brott eller oplanerade order finns kvar efter lokal reparation återställs hela planen till ursprungliga tider och maskiner. Varningen visar kandidatens fel. Det betyder inte att en bättre cap-säker plan är matematiskt omöjlig; V5 är en heuristik och har inte bevisat infeasibility.</p>
+          </article>
+          <article class="case">
+            <span class="tag">Ruta 12 · Exportera</span>
+            <h3>Skapa filer och spårbar förklaring</h3>
+            <p>V5 skriver en tidsstämplad Excel och semikolonavgränsad CSV med V5 i filnamnet. Sammanfattningen innehåller bland annat order ändrade, order låsta för cap-skydd, förseningspoäng och varningar. Överlapp som redan finns i originaldata ska visas, inte döljas.</p>
+          </article>
+        </div>
+        <div class="callout"><div><strong>Viktigt om säkerhetsåterfall</strong>Återfall betyder att V5 inte hittade en godkänd plan med sin heuristik. Det betyder inte att en bättre plan är matematiskt omöjlig. Kontrollera också varningar om överlapp som redan finns i originaldata.</div></div>
+      </section>
+
+      <section id="steg-exempel">
+        <h2>Exempel steg för steg</h2>
+        <p class="section-lead">Följ samma order genom villkoren. Exemplen nedan är pedagogiska och använder påhittade AO-nummer och datum; de visar reglerna, inte resultat från en viss körning.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Exempel</th><th>Indata</th><th>V5-beslut</th><th>Vad visas i resultatet?</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>A · Kan flyttas</b></td>
+                <td>Nu = 08:00. AO#1001 är Op10, `OpStatus = 0`, leveransdatum och kalender finns. Originalstart = 13:00.</td>
+                <td>Låsfönstret slutar 12:00. 13:00 ligger efter fönstret, så AO#1001 får gå in i planeringen.</td>
+                <td>V5 räknar tid på godkända maskiner och jämför hela den återstående kön mot leveransdatum och individuellt tak.</td>
+              </tr>
+              <tr>
+                <td><b>B · Låst nära start</b></td>
+                <td>Nu = 08:00. AO#1002 har originalstart 11:30 på ProdGr 10122.</td>
+                <td>11:30 ligger inom de kommande fyra timmarna. Ordern flyttas inte och maskinbyts inte.</td>
+                <td>Start, sluttid och ProdGr behålls. Tidsintervallet räknas som en fast kapacitetsblockering.</td>
+              </tr>
+              <tr>
+                <td><b>C · En order blir försenad</b></td>
+                <td>AO#1003 ska levereras 20 okt. Originalplanen blir klar 24 okt = 4 dagars tardiness. V5-kandidaten blir klar 27 okt = 7 dagar.</td>
+                <td>Ökningen är <span class="math">7 − 4 = 3 dagar</span>, alltså bryter AO#1003 sitt individuella cap.</td>
+                <td>AO#1003 låses till sin originalslot. V5 räknar om övriga order på berörda maskiner; säkra ändringar kan behållas.</td>
+              </tr>
+              <tr>
+                <td><b>D · Alternativmaskin hjälper</b></td>
+                <td>AO#1004 blir 4 dagar sen på huvudmaskinen. En godkänd alternativmaskin ger i prognosen 1 dags försening.</td>
+                <td>Det ligger inom orderns originaltak och förbättrar kandidatplanen. V5 kontrollerar samtidigt andra order på både käll- och målmaskin.</td>
+                <td>Om den slutliga planen klarar samtliga tak och är komplett visas det nya ProdGr. Kommentaren ska visa faktisk status/marginal, inte lova leverans i tid.</td>
+              </tr>
+              <tr>
+                <td><b>E · Röd men inte sen</b></td>
+                <td>Leveransdatum = 20 okt. Ordern blir klar 20 okt.</td>
+                <td>Faktisk tardiness är 0 dagar, men marginalen är 0. Med V5:s statusgräns blir ordern ändå Röd.</td>
+                <td>Färg och försening visas som två olika mått. Den röda färgen betyder här att den önskade bufferten saknas.</td>
+              </tr>
+              <tr>
+                <td><b>F · Kalendern räcker inte</b></td>
+                <td>En kandidat kan inte placeras inom kalenderns kända täckning, så AI-sluttid saknas.</td>
+                <td>Ordern räknas som oplanerad i kandidaten. Lokal reparation försöker behålla dess originalslot och planera om övriga.</td>
+                <td>Om alla order därefter är planerade och cap-säkra godkänns den reparerade planen. Annars behålls hela originalplanen och varningen förklarar varför.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout"><div><strong>Räkna så här</strong><span class="math">Tardiness = max(0, sluttid − leveranstid)</span>. Cap-brott för en order är <span class="math">max(0, ny tardiness − original tardiness)</span>. V5 accepterar inte positivt cap-brott i den slutliga planen.</div></div>
+      </section>
+
+      <section id="fall">
+        <h2>2. Exempel och olika villkor</h2>
+        <p class="section-lead">Exemplen visar vad appen gör med en order i varje typfall. “Cap” betyder att ordern inte får bli mer försenad än i originalplanen.</p>
+        <div class="grid-2">
+          <article class="case lock">
+            <span class="tag">Fall A · Start inom fyra timmar</span>
+            <h3>Ordern flyttas inte</h3>
+            <p>Op10 startar redan eller har planerad start inom fyra timmar. Appen behåller tid och maskin och räknar tiden som upptagen kapacitet.</p>
+          </article>
+          <article class="case accept">
+            <span class="tag">Fall B · Cap-säker förbättring</span>
+            <h3>Ordern kan planeras om</h3>
+            <p>Ordern ligger utanför låsfönstret. V5 sekvenserar och provar tillåtna maskiner. Ändringen godkänns om alla order fortfarande håller sitt individuella tak och ingen kvalificerad order lämnas oplanerad.</p>
+          </article>
+          <article class="case repair">
+            <span class="tag">Fall C · En order blir sämre</span>
+            <h3>Lås bara den ordern</h3>
+            <p>Om en order får mer faktisk försening än i originalet, låses just den till sin ursprungliga tid och maskin. Resten av kön räknas om och säkra förbättringar kan behållas.</p>
+          </article>
+          <article class="case data">
+            <span class="tag">Fall D · Saknad kalenderkapacitet</span>
+            <h3>Gissa inte en sluttid</h3>
+            <p>Om operationen inte ryms i känd kalender eller kalendern saknas, markeras kandidaten som oplanerad. V5 försöker lokal reparation med originalslot; orsaken visas i varningarna.</p>
+          </article>
+          <article class="case reject">
+            <span class="tag">Fall E · Reparationen räcker inte</span>
+            <h3>Behåll hela originalplanen</h3>
+            <p>Om takbrott eller oplanerade order finns kvar efter lokala försök, avvisas hela V5-kandidaten. Excel/CSV visar originaltiderna och anger hur många fel den avvisade kandidaten hade.</p>
+          </article>
+          <article class="case data">
+            <span class="tag">Fall F · Krock i källdatat</span>
+            <h3>Konflikten rapporteras</h3>
+            <p>Överlapp mellan frysta eller återställda originalslotar döljs inte. Appen rapporterar vilka order och maskiner som redan överlappar i underlaget.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="parametrar">
+        <h2>3. Styrande parametrar</h2>
+        <p class="section-lead">Värdena nedan styr hur V5 planerar. Några kan ändras inför körningen; andra är fasta i V5-koden. Tabellen skiljer också på parametrar som påverkar optimeringen och sådana som bara påverkar hur resultatet visas.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Parameter</th><th>Standard</th><th>Vad den påverkar</th><th>Kan ändras?</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>CLUSTER_WINDOW_DAYS</code></td>
+                <td><b>30 dagar</b></td>
+                <td>Hur långt mellan EDD-datum som ett kluster får vara för att V5 ska räkna med sparad ställtid. Det är inte en generell gräns för all omordning.</td>
+                <td><b>Ja.</b> Skriv ett heltal i fältet <i>Klustring → Fönster</i> innan körning. SQL-tjänsten kan använda <code>--window</code> eller en <code>CLUSTER_WINDOW_DAYS</code>-överskrivning i <code>service/config.json</code>. Standardvärdet ligger i <code>service/config.py</code>.</td>
+              </tr>
+              <tr>
+                <td><code>LOCK_HORIZON_HOURS</code></td>
+                <td><b>4 timmar</b></td>
+                <td>Op10 med originalstart inom de närmaste fyra timmarna låses till ursprunglig start och maskin och räknas som fast kapacitet.</td>
+                <td><b>Nej, inte i appen.</b> V5-värdet ändras i <code>omplanering_core_v5.py</code>. Ändra bara efter beslut om produktionsregeln.</td>
+              </tr>
+              <tr>
+                <td>Individuellt förseningsstak</td>
+                <td><b>0 extra dagar</b></td>
+                <td>Ingen order får bli mer försenad än i originalplanen. Om en order ändå blir sämre låses just den till sin originalslot och övriga order planeras om.</td>
+                <td><b>Fast regel.</b> Det finns ingen inställning i appen för att tillåta extra försening.</td>
+              </tr>
+              <tr>
+                <td><code>TARDINESS_SCORE_TIERS</code></td>
+                <td><b>1 / 3 / 6 / 10 poäng per dag</b></td>
+                <td>Marginalkostnad per order: dag 1–2 = 1; dag 3–5 = 3; dag 6–10 = 6; därefter = 10. Poängen räknas proportionellt för delar av en dag.</td>
+                <td><b>Nej, inte i appen.</b> Trappan ligger i <code>omplanering_core_v5.py</code> och bör bara ändras som ett medvetet affärsbeslut.</td>
+              </tr>
+              <tr>
+                <td><code>GREEN_MARGIN_DAYS</code></td>
+                <td><b>1 dag</b></td>
+                <td>Marginal &gt; 1 dag = Grön; exakt 1 dag = Gul; mindre marginal, även exakt på leveransdagen, = Röd. Färgstatus är skild från faktisk tardiness.</td>
+                <td><b>Inte i desktopappen.</b> Standardvärdet finns i V5-motorn; SQL-tjänsten kan skriva över det via <code>GREEN_MARGIN_DAYS</code> i <code>service/config.json</code>.</td>
+              </tr>
+              <tr>
+                <td><code>DELAY_IN_WORKDAYS</code></td>
+                <td><b>Desktop: kalenderdagar</b></td>
+                <td>Påverkar försenings-KPI:t som visas i sammanfattning/logg. Det ändrar inte cap-regeln eller poängtrappan, som använder kalenderdagar.</td>
+                <td><b>Konfigurationsvärde.</b> SQL-tjänsten kan räkna KPI:t i arbetsdagar; desktopappen använder kalenderdagar.</td>
+              </tr>
+              <tr>
+                <td><code>NOW_Stockholm</code></td>
+                <td><b>Automatiskt vid körstart</b></td>
+                <td>Starttidpunkten som 4-timmarslåset räknas från. Tidszon: Europe/Stockholm.</td>
+                <td><b>Normalt nej.</b> Sätts automatiskt. Vid test kan den styras via kodens test-/körgränssnitt.</td>
+              </tr>
+              <tr>
+                <td><code>MAX_ROUTING_PASSES</code></td>
+                <td><b>4 pass</b></td>
+                <td>Begränsar hur många omgångar V5 provar alternativa maskiner.</td>
+                <td><b>Nej, inte i appen.</b> Fast teknisk gräns i <code>omplanering_core_v5.py</code>.</td>
+              </tr>
+              <tr>
+                <td><code>TARDINESS_BUDGET_PER_SETUP_HOUR</code> / <code>PROTECT_MARGIN_DAYS</code></td>
+                <td><b>V4-parametrar</b></td>
+                <td>Den äldre skadebudgeten för klustring styr inte V5:s aktiva sekvensering. V5 använder i stället individuellt cap, lokal reparation och förseningspoäng.</td>
+                <td><b>Ingen V5-inställning.</b> V4-värden i servicekonfigurationen ändrar inte V5:s cap eller poängtrappa.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout"><div><strong>Ändra en parameter i taget</strong>Kör samma arbetsbok före och efter ändringen. Jämför gröna order, total tardiness, individuella cap-brott, lokalt låsta order och maskinbyten. Spara inställningarna med resultatet så att körningar går att jämföra.</div></div>
+      </section>
+
+      <section id="utfall">
+        <h2>4. Så läser du KPI-korten</h2>
+        <div class="kpi-grid">
+          <div class="kpi"><b>Gröna / gula / röda</b><small>Status före → efter. Grön kräver mer än en dags marginal; exakt på leveransdagen är röd.</small></div>
+          <div class="kpi"><b>Förseningsdygn</b><small>Faktisk försening före → efter. Detta är inte samma sak som färgen Röd.</small></div>
+          <div class="kpi"><b>Omplanerade Op10</b><small>Antal order vars tid eller maskin faktiskt ändrades, inte bara antal möjliga att flytta.</small></div>
+          <div class="kpi"><b>Cap-reparation</b><small>Order som V5 låste lokalt till originalslot för att inte öka deras försening.</small></div>
+        </div>
+        <div class="callout"><div><strong>Om “Omplanerade Op10” är 0</strong>Kontrollera först varningsfliken. Om säkerhetsåterfall visas behöll V5 originalplanen eftersom lokala reparationer inte gav en komplett cap-säker plan. Det ska inte tolkas som att V5 hittade en förbättring.</div></div>
+      </section>
+
+      <section id="ordlista">
+        <h2>5. Kort ordlista</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Begrepp</th><th>Enkel förklaring</th><th>Vad appen gör</th></tr></thead>
+            <tbody>
+              <tr><td><code>Op10</code></td><td>Operationen som V5 får flytta.</td><td>Övriga operationer lämnas som de är.</td></tr>
+              <tr><td>4 h lås</td><td>Nära förestående start får inte flyttas.</td><td>Behåll originaltid/maskin och reservera kapaciteten.</td></tr>
+              <tr><td>Cap / förseningsstak</td><td>En order får inte bli mer sen än i baslinjen.</td><td>Lås ordern lokalt och planera om resten.</td></tr>
+              <tr><td>Lokal reparation</td><td>Skydda en order utan att ge upp hela planen.</td><td>Återställ just den orderns originalslot och kör om den berörda kön.</td></tr>
+              <tr><td>Säkerhetsåterfall</td><td>Den föreslagna planen kunde inte godkännas.</td><td>Behåll hela originalplanen och redovisa kandidatens fel.</td></tr>
+              <tr><td>Förseningspoäng</td><td>Senare order får högre kostnad per ytterligare dag.</td><td>0–2 dagar: 1/dag; 3–5: 3/dag; 6–10: 6/dag; över 10: 10/dag.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Teknisk detalj: V5 är en heuristik, inte en fullständig matematisk optimeringslösare. Den kan därför låsa fler order än nödvändigt; ett säkerhetsåterfall bevisar inte att en bättre cap-säker plan saknas.</p>
+      </section>
+    </main>
+    <footer>AI Omplanering V5 · Op10 · Dokumentationsöversikt · 2026-10-08</footer>
+  </div>
+</body>
+</html>
